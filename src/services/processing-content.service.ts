@@ -41,3 +41,15 @@ export interface FileContent {
     status: string,
 }
 
+export interface Processor {
+    name: string,
+}
+
+export interface Component {
+    type: string
+    name: string,
+    typeName: string,
+    props: object,
+    stateDetail: any,
+    primary: boolean
+}
