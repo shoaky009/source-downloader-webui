@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import {toggleDark} from "~/composables";
+import {Refresh} from "@element-plus/icons-vue";
+import {applicationService} from "~/services/data.service";
 </script>
 
 <template>
@@ -10,6 +12,11 @@ import {toggleDark} from "~/composables";
               style="height: var(--ep-menu-item-height)">
         <i inline-flex i="dark:ep-moon ep-sunny"/>
       </button>
+    </el-menu-item>
+    <el-menu-item @click="applicationService.reload()">
+      <el-icon>
+        <refresh/>
+      </el-icon>
     </el-menu-item>
   </el-menu>
 </template>
