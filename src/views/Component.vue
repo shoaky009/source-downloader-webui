@@ -43,11 +43,7 @@
 </template>
 
 <script lang="ts">
-import {
-  ElButton,
-  ElTag,
-  ElSwitch,
-} from "element-plus";
+import {ElButton, ElTag,} from "element-plus";
 import {defineComponent, ref} from "vue";
 import {Component} from "~/services/processing-content.service";
 import {componentService} from "~/services/data.service";
@@ -76,8 +72,8 @@ export default defineComponent({
     const handleDelete = (index: number, component: Component) => {
       console.log(index, component)
     }
-    const handleReload = (component: Component) => {
-      console.log(component)
+    const handleReload = async (component: Component) => {
+      await componentService.reload(component)
     }
     return {handleEdit, handleDelete, handleReload}
   },
