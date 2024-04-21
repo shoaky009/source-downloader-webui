@@ -43,6 +43,10 @@ export interface FileContent {
 
 export interface Processor {
     name: string,
+    category: string,
+    tags: string[],
+    enabled: boolean,
+    lastTriggerTime: string,
 }
 
 export interface Component {
@@ -52,4 +56,11 @@ export interface Component {
     props: object,
     stateDetail: any,
     primary: boolean
+}
+
+export interface ApplicationInfo {
+    name: string,
+    version: string,
+    time: string,
+    artifact: string
 }
