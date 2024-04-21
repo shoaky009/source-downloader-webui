@@ -35,8 +35,6 @@ const handleReload = async () => {
         })
       })
       .catch(err => {
-        console.log(err)
-
         ElMessage({
           message: err.response?.data?.detail ?? err.message,
           type: 'error',
