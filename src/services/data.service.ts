@@ -93,7 +93,7 @@ class ProcessorService {
     }
 
     async dryRun(name: string, options: object) {
-        return instance.post(`/api/processor/${name}/dry-run`);
+        return instance.post(`/api/processor/${name}/dry-run`, options);
     }
 
     async enable(name: string) {
