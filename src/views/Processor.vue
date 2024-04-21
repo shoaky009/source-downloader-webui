@@ -27,7 +27,13 @@
         </el-tag>
       </template>
     </el-table-column>
-    <el-table-column label="Operations">
+    <el-table-column>
+      <template #header>
+        <el-tooltip effect="dark" :content="operationDescription" placement="top" raw-content>
+          Operations
+        </el-tooltip>
+      </template>
+
       <template #default="scope">
         <el-button size="small" @click="handleEdit(scope.$index, scope.row)">
           WIP编辑
@@ -41,6 +47,9 @@
         <el-button size="small" @click="handleTrigger(scope.row)">
           触发
         </el-button>
+        <el-button size="small" @click="handleRename(scope.row)">
+          移动
+        </el-button>
         <el-button
             size="small"
             type="danger"
@@ -53,53 +62,55 @@
   </el-table>
 </template>
 
-<script lang="ts">
-import {
-  ElButton,
-  ElTag,
-  ElSwitch,
-} from "element-plus";
-import {defineComponent, ref} from "vue";
-import {Processor} from "~/services/processing-content.service";
-import {processorService} from "~/services/data.service";
+<script setup lang="ts">
+import { ElButton, ElSwitch, ElTag } from "element-plus";
+import { ref } from "vue";
+import { Processor } from "~/services/processing-content.service";
+import { processorService } from "~/services/data.service";
 
-export default defineComponent({
-  name: 'Processor',
-  data() {
-    return {
-      processors: ref<Processor[]>([]),
-    };
-  },
-  methods: {
-    loadMore() {
-      processorService.query().then(response => {
-        this.processors = response
-      })
-    }
-  },
-  created() {
-    this.loadMore();
-  },
-  setup() {
-    const handleEdit = (index: number, processor: Processor) => {
-      console.log(index, processor)
-    }
-    const handleDelete = (index: number, processor: Processor) => {
-      console.log(index, processor)
-    }
-    const handleTrigger = (processor: Processor) => {
-      processorService.trigger(processor.name)
-    }
-    const handleDryRun = (index: number, processor: Processor) => {
-      console.log(index, processor)
-    }
-    const handleEnable = (index: number, processor: Processor) => {
-      console.log(index, processor)
-    }
-    const handleReload = (processor: Processor) => {
-      processorService.reload(processor.name)
-    }
-    return {handleEdit, handleDelete, handleTrigger, handleDryRun, handleEnable, handleReload}
-  },
-});
+const operationDescription = `
+<div>
+重载: 重新创建处理器实例<br/>
+演练: 模拟处理器执行,不执行下载等实际行为<br/>
+触发: 手动触发处理器执行<br/>
+移动: 执行可移动的Item<br/>
+</div>
+`;
+
+const processors = ref<Processor[]>([]);
+
+const loadMore = () => {
+  processorService.query().then(response => {
+    processors.value = response;
+  });
+};
+
+const handleEdit = (index: number, processor: Processor) => {
+  console.log(index, processor);
+};
+
+const handleDelete = (index: number, processor: Processor) => {
+  console.log(index, processor);
+};
+
+const handleTrigger = (processor: Processor) => {
+  processorService.trigger(processor.name);
+};
+
+const handleDryRun = (index: number, processor: Processor) => {
+  console.log(index, processor);
+};
+
+const handleEnable = (index: number, processor: Processor) => {
+  console.log(index, processor);
+};
+
+const handleReload = (processor: Processor) => {
+  processorService.reload(processor.name);
+};
+const handleRename = (processor: Processor) => {
+  processorService.rename(processor.name);
+};
+
+loadMore();
 </script>
