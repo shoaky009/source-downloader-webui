@@ -4,6 +4,7 @@
             infinite-scroll-immediate="false"
             infinite-scroll-delay="1000"
             infinite-scroll-distance="5"
+            v-loading.lock="loading"
   >
     <el-table-column type="expand">
       <template #default="props">
@@ -27,35 +28,31 @@
 </template>
 
 
-<script lang="ts">
-import {defineComponent, ref} from 'vue';
-import {FileContent, ProcessingContent, ScrollResponse} from "~/services/processing-content.service";
+<script setup lang="ts">
+import {onMounted, ref} from 'vue';
+import {FileContent, ProcessingContent} from "~/services/processing-content.service";
 import {processingContentService} from "~/services/data.service";
 
-export default defineComponent({
-  name: 'ProcessingContent',
-  data() {
-    return {
-      items: ref<ProcessingContent[]>([]),
-      maxId: 0,
-    };
-  },
-  methods: {
-    loadMore() {
-      processingContentService.query({
-        'maxId': this.maxId.toString(),
-      }).then(response => {
-        const contents = response.contents
-        this.items = this.items.concat(contents);
-        const nextMaxId = response.nextMaxId
-        if (nextMaxId) {
-          this.maxId = nextMaxId
-        }
-      })
+const items = ref<ProcessingContent[]>([]);
+let maxId = 0;
+const loading = ref(false);
+const loadMore = () => {
+  loading.value = true
+  processingContentService.query({
+    'maxId': maxId.toString(),
+  }).then(response => {
+    const contents = response.contents;
+    items.value = items.value.concat(contents);
+    const nextMaxId = response.nextMaxId;
+    if (nextMaxId) {
+      maxId = nextMaxId;
     }
-  },
-  created() {
-    this.loadMore();
-  }
+  }).finally(() => {
+    loading.value = false;
+  })
+};
+
+onMounted(() => {
+  loadMore();
 });
 </script>
