@@ -1,5 +1,11 @@
 import axios, {AxiosResponse} from 'axios';
-import {ProcessingContent, ScrollResponse, Processor, Component} from "~/services/processing-content.service";
+import {
+    ProcessingContent,
+    ScrollResponse,
+    Processor,
+    Component,
+    ApplicationInfo
+} from "~/services/processing-content.service";
 
 const isDev = () => import.meta.env.MODE === 'development';
 const API_BASE_URL = () => import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
@@ -100,8 +106,8 @@ class ComponentService {
 
 class ApplicationService {
 
-    async info() {
-        return instance.get(`/api/application/info`);
+    async info(): Promise<ApplicationInfo> {
+        return instance.get(`/api/application/info`).then((res: AxiosResponse<ApplicationInfo>) => res.data);
     }
 
     async reload() {
