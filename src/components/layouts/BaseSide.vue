@@ -40,7 +40,7 @@ import {
   Menu as IconMenu,
   Setting,
 } from "@element-plus/icons-vue";
-import Processor from "~/components/Processor.vue";
+import Processor from "~/components/icons/Processor.vue";
 
 const isCollapse = ref(true);
 const handleOpen = (key: string, keyPath: string[]) => {
