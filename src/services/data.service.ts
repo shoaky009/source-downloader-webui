@@ -4,7 +4,6 @@ import {
     ScrollResponse,
     Processor,
     Component,
-    ApplicationInfo
 } from "~/services/processing-content.service";
 
 const isDev = () => import.meta.env.MODE === 'development';
@@ -106,12 +105,15 @@ class ComponentService {
 
 class ApplicationService {
 
-    async info(): Promise<ApplicationInfo> {
-        return instance.get(`/api/application/info`).then((res: AxiosResponse<ApplicationInfo>) => res.data);
-    }
-
     async reload() {
         return instance.get(`/api/application/reload`);
+    }
+}
+
+class ActuatorService {
+
+    async info() {
+        return instance.get(`/actuator/info`);
     }
 }
 
@@ -119,3 +121,4 @@ export const processingContentService = new ProcessingContentService();
 export const processorService = new ProcessorService();
 export const componentService = new ComponentService();
 export const applicationService = new ApplicationService();
+export const actuatorService = new ActuatorService();

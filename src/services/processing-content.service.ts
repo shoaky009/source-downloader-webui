@@ -57,10 +57,3 @@ export interface Component {
     stateDetail: any,
     primary: boolean
 }
-
-export interface ApplicationInfo {
-    name: string,
-    version: string,
-    time: string,
-    artifact: string
-}
