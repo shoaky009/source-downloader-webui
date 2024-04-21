@@ -73,50 +73,19 @@
   <ShowSourceState :processor-name="stateProcessor" :show-state="stateJsonViewer"
                    @dialog-close="() => stateJsonViewer=false"/>
 
-  <el-dialog
-      v-model="dryRunFormViewer"
-      width="500"
-      center
-  >
-    <el-form :model="dryRunFrom" label-width="auto">
-      <el-form-item label="过滤已处理的Item">
-        <el-switch v-model="dryRunFrom.filterProcessed"/>
-      </el-form-item>
-      <el-form-item label="Pointer">
-        <json-editor
-            v-model="dryRunFrom.pointer"
-            mode="tree"
-            :ask-to-format="false"
-            :darkTheme="isDark"/>
-      </el-form-item>
-
-      <el-form-item>
-        <el-button type="primary" @click="handleDryRunFormSubmit">确认</el-button>
-      </el-form-item>
-    </el-form>
-  </el-dialog>
-
-  <el-dialog
-      v-model="dryRunViewer"
-      width="500"
-      destroy-on-close
-      center
-  >
-    <json-editor v-model:json="dryRunData" mode="tree" :darkTheme="isDark"/>
-  </el-dialog>
+  <ProcessorDryRun :processor-name="dryRunProcessor" :open-form="openDryRunForm" @dialog-close="handleDryRunFormClose"/>
 
 </template>
 
 <script setup lang="ts">
 import {ElButton, ElSwitch, ElTag} from "element-plus";
-import {reactive, ref} from "vue";
+import {ref} from "vue";
 import {Processor} from "~/services/processing-content.service";
 import {processorService} from "~/services/data.service";
-import JsonEditor from 'vue3-ts-jsoneditor';
 
 import "vue3-json-viewer/dist/index.css";
-import {isDark} from "~/composables";
 import ShowSourceState from "~/views/biz/ShowSourceState.vue";
+import ProcessorDryRun from "~/views/biz/ProcessorDryRun.vue";
 
 const operationDescription = `
 <div>
@@ -157,32 +126,21 @@ const handleStateClick = (processor: Processor) => {
 };
 
 //=========
-const dryRunFormViewer = ref(false)
-const dryRunFrom = reactive({
-  filterProcessed: true,
-  pointer: null
-})
+const openDryRunForm = ref(false)
+const dryRunProcessor = ref<string>()
 
-const dryRunViewer = ref(false)
-const dryRunData = ref({})
-const currentClickProcessor = ref<Processor | null>(null)
+const handleDryRun = (processor: Processor) => {
+  openDryRunForm.value = true
+  dryRunProcessor.value = processor.name
+};
 
-const handleDryRunFormSubmit = () => {
-  if (currentClickProcessor.value) {
-    processorService.dryRun(currentClickProcessor.value.name, dryRunFrom)
-  }
-  dryRunViewer.value = false;
+const handleDryRunFormClose = () => {
+  openDryRunForm.value = false
 };
 
 //=========
 const handleTrigger = (processor: Processor) => {
   processorService.trigger(processor.name);
-};
-
-//=========
-const handleDryRun = (processor: Processor) => {
-  dryRunFormViewer.value = true
-  currentClickProcessor.value = processor
 };
 
 //=========
