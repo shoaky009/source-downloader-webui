@@ -18,7 +18,7 @@
     <el-table-column label="Details" width="100%" align="center">
       <template #default="scope">
         <el-tooltip content="数据源的处理进度">
-          <el-button size="small" @click="showState(scope.row)">
+          <el-button size="small" @click="handleStateClick(scope.row)">
             Pointer
           </el-button>
         </el-tooltip>
@@ -50,8 +50,8 @@
         <el-button size="small" @click="handleReload(scope.row)">
           重载
         </el-button>
-        <el-button size="small" @click="handleDryRun(scope.$index, scope.row)">
-          WIP演练
+        <el-button size="small" @click="handleDryRun(scope.row)">
+          演练
         </el-button>
         <el-button size="small" @click="handleTrigger(scope.row)">
           触发
@@ -70,26 +70,53 @@
     </el-table-column>
   </el-table>
 
+  <ShowSourceState :processor-name="stateProcessor" :show-state="stateJsonViewer"
+                   @dialog-close="() => stateJsonViewer=false"/>
 
   <el-dialog
-      v-model="showJsonViewer"
+      v-model="dryRunFormViewer"
+      width="500"
+      center
+  >
+    <el-form :model="dryRunFrom" label-width="auto">
+      <el-form-item label="过滤已处理的Item">
+        <el-switch v-model="dryRunFrom.filterProcessed"/>
+      </el-form-item>
+      <el-form-item label="Pointer">
+        <json-editor
+            v-model="dryRunFrom.pointer"
+            mode="tree"
+            :ask-to-format="false"
+            :darkTheme="isDark"/>
+      </el-form-item>
+
+      <el-form-item>
+        <el-button type="primary" @click="handleDryRunFormSubmit">确认</el-button>
+      </el-form-item>
+    </el-form>
+  </el-dialog>
+
+  <el-dialog
+      v-model="dryRunViewer"
       width="500"
       destroy-on-close
       center
   >
-    <JsonViewer :value="jsonData" copyable boxed :theme="isDark ? 'dark' : 'light'"/>
+    <json-editor v-model:json="dryRunData" mode="tree" :darkTheme="isDark"/>
   </el-dialog>
+
 </template>
 
 <script setup lang="ts">
 import {ElButton, ElSwitch, ElTag} from "element-plus";
-import {ref} from "vue";
+import {reactive, ref} from "vue";
 import {Processor} from "~/services/processing-content.service";
 import {processorService} from "~/services/data.service";
+import JsonEditor from 'vue3-ts-jsoneditor';
 
-import {JsonViewer} from 'vue3-json-viewer'
 import "vue3-json-viewer/dist/index.css";
 import {isDark} from "~/composables";
+import ShowSourceState from "~/views/biz/ShowSourceState.vue";
 
 const operationDescription = `
 <div>
@@ -101,46 +128,71 @@ const operationDescription = `
 `;
 
 const processors = ref<Processor[]>([]);
-const showJsonViewer = ref(false)
-const jsonData = ref({})
-
 const loadMore = () => {
   processorService.query().then(response => {
     processors.value = response;
   });
 };
 
-const handleEdit = (index: number, processor: Processor) => {
-  console.log(index, processor);
-};
-
-const handleDelete = (index: number, processor: Processor) => {
-  console.log(index, processor);
-};
-
-const handleTrigger = (processor: Processor) => {
-  processorService.trigger(processor.name);
-};
-
-const handleDryRun = (index: number, processor: Processor) => {
-  console.log(index, processor);
-};
-
+//=========
 const handleEnable = (index: number, processor: Processor) => {
   console.log(index, processor);
 };
 
+//=========
+const handleEdit = (index: number, processor: Processor) => {
+  console.log(index, processor);
+};
+//=========
 const handleReload = (processor: Processor) => {
   processorService.reload(processor.name);
 };
+
+//=========
+const stateJsonViewer = ref(false)
+const stateProcessor = ref<string>()
+const handleStateClick = (processor: Processor) => {
+  stateProcessor.value = processor.name
+  stateJsonViewer.value = true;
+};
+
+//=========
+const dryRunFormViewer = ref(false)
+const dryRunFrom = reactive({
+  filterProcessed: true,
+  pointer: null
+})
+
+const dryRunViewer = ref(false)
+const dryRunData = ref({})
+const currentClickProcessor = ref<Processor | null>(null)
+
+const handleDryRunFormSubmit = () => {
+  if (currentClickProcessor.value) {
+    processorService.dryRun(currentClickProcessor.value.name, dryRunFrom)
+  }
+  dryRunViewer.value = false;
+};
+
+//=========
+const handleTrigger = (processor: Processor) => {
+  processorService.trigger(processor.name);
+};
+
+//=========
+const handleDryRun = (processor: Processor) => {
+  dryRunFormViewer.value = true
+  currentClickProcessor.value = processor
+};
+
+//=========
 const handleRename = (processor: Processor) => {
   processorService.rename(processor.name);
 };
 
-const showState = async (processor: Processor) => {
-  const response = await processorService.sourceState(processor.name);
-  jsonData.value = response.data.pointer;
-  showJsonViewer.value = true;
+//=========
+const handleDelete = (index: number, processor: Processor) => {
+  console.log(index, processor);
 };
 
 loadMore();
