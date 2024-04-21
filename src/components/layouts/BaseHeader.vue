@@ -28,18 +28,6 @@ import {ElLoading, ElMessage} from "element-plus";
 const handleReload = async () => {
   const instance = ElLoading.service({fullscreen: true})
   await applicationService.reload()
-      .then(_ => {
-        ElMessage({
-          message: '重载完成',
-          type: 'success',
-        })
-      })
-      .catch(err => {
-        ElMessage({
-          message: err.response?.data?.detail ?? err.message,
-          type: 'error',
-        })
-      })
       .finally(() => {
         instance.close();
       })
