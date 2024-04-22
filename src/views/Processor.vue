@@ -71,9 +71,7 @@
     </el-table-column>
   </el-table>
 
-  <ShowSourceState :processor-name="stateProcessor" :show-state="stateJsonViewer"
-                   @dialog-close="() => stateJsonViewer=false"/>
-
+  <ShowSourceState :processor-name="stateProcessor" v-model="stateJsonViewer"/>
   <ProcessorDryRun :processor-name="dryRunProcessor" :open-form="openDryRunForm" @dialog-close="handleDryRunFormClose"/>
   <ProcessorForm v-model="creationFormOpen"/>
 </template>
