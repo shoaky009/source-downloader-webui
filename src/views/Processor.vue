@@ -1,4 +1,5 @@
 <template>
+  <el-button :icon="Plus" circle @click="handleCreateForm"/>
   <el-table :data="processors" style="width: 100%">
     <el-table-column label="Name" width="180" align="center">
       <template #default="scope">
@@ -74,11 +75,12 @@
                    @dialog-close="() => stateJsonViewer=false"/>
 
   <ProcessorDryRun :processor-name="dryRunProcessor" :open-form="openDryRunForm" @dialog-close="handleDryRunFormClose"/>
-
+  <ProcessorForm v-model="creationFormOpen"/>
 </template>
 
 <script setup lang="ts">
 import {ElButton, ElSwitch, ElTag} from "element-plus";
+import {Plus,} from "@element-plus/icons-vue";
 import {ref} from "vue";
 import {Processor} from "~/services/processing-content.service";
 import {processorService} from "~/services/data.service";
@@ -86,6 +88,7 @@ import {processorService} from "~/services/data.service";
 import "vue3-json-viewer/dist/index.css";
 import ShowSourceState from "~/views/biz/ShowSourceState.vue";
 import ProcessorDryRun from "~/views/biz/ProcessorDryRun.vue";
+import ProcessorForm from "~/views/biz/ProcessorForm.vue";
 
 const operationDescription = `
 <div>
@@ -101,6 +104,11 @@ const loadMore = () => {
   processorService.query().then(response => {
     processors.value = response;
   });
+};
+
+const creationFormOpen = ref(false)
+const handleCreateForm = () => {
+  creationFormOpen.value = true
 };
 
 //=========
