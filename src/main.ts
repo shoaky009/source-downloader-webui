@@ -23,7 +23,9 @@ import {
     ElInputNumber,
     ElSwitch,
     ElText,
-    ElTabs, ElButton
+    ElSelect,
+    ElTabs,
+    ElButton
 } from "element-plus";
 import ComponentSelector from "~/views/biz/ComponentSelector.vue";
 
@@ -74,6 +76,7 @@ function registerAllFormComponents() {
     DynamicFormItemRegistry.registerDynamicFormItemControl('text-area', markRaw(ElText), {}, 'modelValue');
     DynamicFormItemRegistry.registerDynamicFormItemControl('switch', markRaw(ElSwitch), {}, 'modelValue');
     DynamicFormItemRegistry.registerDynamicFormItemControl('check-box', markRaw(ElCheckbox), {}, 'modelValue')
+    DynamicFormItemRegistry.registerDynamicFormItemControl('select', markRaw(ElSelect), {}, 'modelValue')
     DynamicFormItemRegistry.registerDynamicFormItemControl('date', markRaw(ElDatePicker), {}, 'pickerValue');
     DynamicFormItemRegistry.registerDynamicFormItemControl('component-selector', markRaw(ComponentSelector), {}, 'modelValue');
 }
