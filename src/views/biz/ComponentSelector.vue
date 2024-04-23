@@ -1,10 +1,12 @@
 <template>
   <el-select
-      v-model="value"
+      v-model="componentValue"
       filterable
+      clearable
       style="width: 240px"
       :multiple="multiple"
       @focus="loadOptions"
+      placeholder="选择组件ID"
   >
     <el-option
         v-for="item in options"
@@ -19,18 +21,13 @@
 import {ref, toRefs} from "vue";
 import {componentService} from "~/services/data.service";
 
-const props = withDefaults(
-    defineProps<{
-      type: string,
-      multiple: boolean,
-    }>(),
-    {
-      multiple: false,
-    }
-)
+const props = defineProps<{
+  type: string,
+  multiple?: boolean,
+}>()
 const {type, multiple} = toRefs(props)
 const options = ref()
-const value = ref<string | string[]>()
+const componentValue = ref<string | string[]>()
 
 const loadOptions = async () => {
   if (options.value) {
