@@ -45,8 +45,7 @@
 <script lang="ts">
 import {ElButton, ElTag,} from "element-plus";
 import {defineComponent, ref} from "vue";
-import {Component} from "~/services/processing-content.service";
-import {componentService} from "~/services/data.service";
+import {Component, componentService} from "~/services/data.service";
 
 export default defineComponent({
   name: 'Component',

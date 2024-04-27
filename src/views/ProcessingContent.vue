@@ -1,48 +1,158 @@
 <template>
-  <el-table :data="items" row-key="id"
-            v-infinite-scroll="loadMore"
-            infinite-scroll-immediate="false"
-            infinite-scroll-delay="1000"
-            infinite-scroll-distance="5"
-            v-loading.lock="loading"
+  <el-affix :offset="80">
+    <el-row>
+      <el-col :span="4">
+        <ProcessorSelector @update:selected="handleSelectedProcessors"/>
+      </el-col>
+      <el-col :span="4">
+        <el-select v-model="status"
+                   multiple
+                   placeholder="状态"
+                   collapse-tags
+                   :max-collapse-tags="2"
+                   @blur="handleStatusSelected"
+        >
+          <el-option
+              v-for="item in processingContentStatuses"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+
+          />
+        </el-select>
+      </el-col>
+      <el-col :span="4">
+        <el-input v-model="itemHash" placeholder="条目哈希" clearable @blur="handleItemHashBlur"/>
+      </el-col>
+    </el-row>
+    <el-row>
+      <el-col :span="4">
+        <el-input v-model="itemTitle" placeholder="条目标题" clearable @input="handleItemTitleChange"/>
+      </el-col>
+      <el-col :span="4">
+        <el-date-picker
+            v-model="createTimeRange"
+            type="datetimerange"
+            :shortcuts="shortcuts"
+            range-separator="To"
+            start-placeholder="Start date"
+            end-placeholder="End date"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            @change="handleDateChange"
+        />
+      </el-col>
+    </el-row>
+  </el-affix>
+
+  <el-table
+      :data="itemContents" row-key="id"
+      v-infinite-scroll="loadMore"
+      infinite-scroll-immediate="false"
+      infinite-scroll-delay="1000"
+      infinite-scroll-distance="5"
+      v-loading.lock="loading"
+      style="width: 100%"
+      ref="tableRef"
   >
-    <el-table-column type="expand">
-      <template #default="props">
-        <el-table :data="props.row.itemContent.fileContents">
-          <el-table-column label="下载路径" prop="fileDownloadPath"/>
-          <el-table-column label="目标路径"
-                           :formatter="(row:FileContent) => `${row.targetSavePath}/${row.targetFilename}`"/>
-          <el-table-column label="Status" prop="status"/>
-          <el-table-column label="Tags" prop="tags"/>
-          <el-table-column label="Errors" prop="errors"/>
-        </el-table>
+    <el-table-column prop="id" width="auto">
+      <template #default="scope">
+        <el-tag size="large" type="info">ID:{{ scope.row.id }}</el-tag>
+        <el-tag size="large" type="info">处理器:{{ scope.row.processorName }}</el-tag>
+        <el-tag size="large" :type="itemStatusOf(scope.row.status).type">
+          状态:{{ itemStatusOf(scope.row.status).label }}
+        </el-tag>
+        <el-tag size="large" type="info">Hash:{{ scope.row.itemHash }}</el-tag>
       </template>
     </el-table-column>
-    <el-table-column prop="id" label="ID" fixed/>
-    <el-table-column prop="processorName" label="ProcessorName"/>
-    <el-table-column prop="itemContent.sourceItem.title" label="Title"/>
-    <el-table-column prop="itemContent.fileContents.length" label="Files"/>
-    <el-table-column prop="status" label="Status"/>
+    <el-table-column prop="itemContent.sourceItem.title" label="条目" min-width="300" width="auto">
+      <template #default="scope">
+        <ItemContentDetail :content="scope.row.itemContent"/>
+      </template>
+    </el-table-column>
+    <el-table-column prop="itemContent.fileContents.length" label="文件">
+      <template #default="scope">
+        <el-button size="small" @click="handleFileContentOpen(scope.row)">
+          查看{{ scope.row.itemContent.fileContents.length }}个文件
+        </el-button>
+        <el-tag type="info">
+          命名次数:{{ scope.row.renameTimes }}
+        </el-tag>
+        <el-tag
+            v-for="[status, count] in fileStatusGrouping(scope.row.itemContent.fileContents)"
+            :key="status.value" :type="status.type"
+        >
+          {{ status.label }}:{{ count }}
+        </el-tag>
+      </template>
+    </el-table-column>
     <el-table-column prop="createTime" label="CreateTime"/>
+    <el-table-column label="Operation">
+      <template #default="scope">
+        <el-popconfirm title="确定重新处理?" @confirm="handleReprocess(scope.row)">
+          <template #reference>
+            <el-button size="small" type="warning">重新处理</el-button>
+          </template>
+        </el-popconfirm>
+        <el-popconfirm title="确定删除?" @confirm="handleDelete(scope.row)">
+          <template #reference>
+            <el-button size="small" type="danger">删除</el-button>
+          </template>
+        </el-popconfirm>
+      </template>
+    </el-table-column>
   </el-table>
+
+  <el-dialog v-model="showFileContentDialog">
+    <el-table :data="fileContents" row-key="fileDownloadPath">
+      <el-table-column>
+        <template #default="scope">
+          <FileContentDetail :file="scope.row"/>
+        </template>
+      </el-table-column>
+    </el-table>
+  </el-dialog>
 </template>
 
 
 <script setup lang="ts">
 import {onMounted, ref} from 'vue';
-import {FileContent, ProcessingContent} from "~/services/processing-content.service";
-import {processingContentService} from "~/services/data.service";
+import {
+  FileContent,
+  ProcessingContent,
+  processingContentService,
+  processingContentStatuses,
+  itemStatusOf, fileStatusOf, TaggableStatus
+} from "~/services/data.service";
+import {debounce} from "lodash";
+import ItemContentDetail from "~/components/ItemContentDetail.vue";
 
-const items = ref<ProcessingContent[]>([]);
+// main list
+const itemContents = ref<ProcessingContent[]>([]);
 let maxId = 0;
 const loading = ref(false);
-const loadMore = () => {
+const tableRef = ref();
+const loadMore = (clear: boolean = false) => {
+  if (clear) {
+    maxId = 0
+  }
   loading.value = true
   processingContentService.query({
     'maxId': maxId.toString(),
+    'processorName': selectedProcessors.value.join(','),
+    'status': status.value.join(','),
+    'itemHash': itemHash.value,
+    'itemTitle': itemTitle.value,
+    'createTime.begin': createTimeRange?.value?.at(0),
+    'createTime.end': createTimeRange?.value?.at(1),
   }).then(response => {
     const contents = response.contents;
-    items.value = items.value.concat(contents);
+    if (clear) {
+      itemContents.value = contents
+      //不知道怎么回到顶部
+      // tableRef.value.setScrollTop(-999)
+    } else {
+      itemContents.value = itemContents.value.concat(contents);
+    }
     const nextMaxId = response.nextMaxId;
     if (nextMaxId) {
       maxId = nextMaxId;
@@ -53,6 +163,97 @@ const loadMore = () => {
 };
 
 onMounted(() => {
-  loadMore();
+  loadMore(true);
 });
+
+// file content dialog
+const fileContents = ref<FileContent[]>([]);
+const showFileContentDialog = ref(false);
+const handleFileContentOpen = (content: ProcessingContent) => {
+  fileContents.value = content.itemContent.fileContents;
+  showFileContentDialog.value = true;
+}
+const fileStatusGrouping = (fileContents: FileContent[]): Map<TaggableStatus, number> => {
+  const grouping = new Map<string, number>();
+  for (const {status} of fileContents) {
+    grouping.set(status, (grouping.get(status) || 0) + 1);
+  }
+
+  const result = new Map<TaggableStatus, number>();
+  for (const [key, value] of grouping) {
+    result.set(fileStatusOf(key), value);
+  }
+  return result
+}
+
+
+// query condition
+const selectedProcessors = ref<string[]>([]);
+const handleSelectedProcessors = (selected: string[]) => {
+  selectedProcessors.value = selected;
+  // 不允许在没有选择处理器的情况下查询状态
+  if (selected.length === 0) {
+    status.value = []
+  }
+  loadMore(true)
+}
+
+const status = ref<string[]>([]);
+const handleStatusSelected = () => {
+  if (selectedProcessors.value.length > 0) {
+    loadMore(true)
+  }
+}
+
+const itemHash = ref<string>();
+const handleItemHashBlur = () => {
+  if (itemHash.value) {
+    maxId = 0
+  }
+  loadMore(true)
+}
+
+const itemTitle = ref<string>();
+const handleItemTitleChange = debounce((text) => {
+  itemTitle.value = text
+  loadMore(true)
+}, 200)
+
+
+const createTimeRange = ref<[Date, Date]>();
+const handleDateChange = (_: [Date, Date]) => {
+  loadMore(true)
+}
+const shortcuts = [
+  {
+    text: 'Today',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setHours(0, 0, 0, 0)
+      return [start, end]
+    },
+  },
+  {
+    text: 'Last week',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setDate(start.getDate() - 7)
+      return [start, end]
+    },
+  }
+]
+
+// operation
+const handleReprocess = (row: ProcessingContent) => {
+  processingContentService.reprocess(row.id).then(() => {
+    loadMore(true)
+  })
+}
+const handleDelete = (row: ProcessingContent) => {
+  processingContentService.delete(row.id).then(() => {
+    loadMore(true)
+  })
+}
 </script>

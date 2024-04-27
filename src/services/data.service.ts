@@ -1,5 +1,4 @@
 import axios, {AxiosResponse, InternalAxiosRequestConfig} from 'axios';
-import {Component, ProcessingContent, Processor, ScrollResponse,} from "~/services/processing-content.service";
 import {ElMessage} from "element-plus";
 
 const isDev = () => import.meta.env.MODE === 'development';
@@ -24,19 +23,87 @@ instance.interceptors.response.use(response => {
     return response;
 }, error => {
     // 对响应错误做点什么
-    if (error.config.alertMessage) {
-        ElMessage({
-            message: error.response?.data?.detail ?? error.message,
-            type: 'error',
-        })
-    }
+    ElMessage({
+        message: error.response?.data?.detail ?? error.message,
+        type: 'error',
+    })
     return Promise.reject(error);
 });
 
+export interface ScrollResponse<T> {
+    contents: T[],
+    nextMaxId: number
+}
+
+export interface ProcessingContent {
+    id: number,
+    processorName: string,
+    itemHash: string,
+    itemContent: ItemContent,
+    status: string,
+    renameTimes: number,
+    modifyTime: string,
+    createTime: string
+}
+
+export interface SourceItem {
+    title: string,
+    link: string,
+    datetime: string,
+    contentType: string,
+    downloadUri: string,
+    attrs: object,
+    tags: string[]
+}
+
+export interface ItemContent {
+    sourceItem: SourceItem
+    itemVariables: object,
+    fileContents: FileContent[]
+}
+
+export interface FileContent {
+    fileDownloadPath: string,
+    targetSavePath: string,
+    targetFilename: string,
+    fileSavePathPattern: string,
+    filenamePattern: string,
+    patternVariables: object,
+    processedVariables: object,
+    attrs: object,
+    tags: string[],
+    errors: string[],
+    status: string,
+    fileUri: string,
+}
+
+export interface Processor {
+    name: string,
+    category: string,
+    tags: string[],
+    enabled: boolean,
+    lastTriggerTime: string,
+}
+
+export interface Component {
+    type: string
+    name: string,
+    typeName: string,
+    props: object,
+    stateDetail: any,
+    primary: boolean
+}
+
 class ProcessingContentService {
 
-    async query(query: Record<string, string>): Promise<ScrollResponse<ProcessingContent>> {
-        const params = new URLSearchParams(query)
+    async query(query: Record<string, any>): Promise<ScrollResponse<ProcessingContent>> {
+        const filteredQuery = Object.entries(query).reduce((acc, [key, value]) => {
+            if (value !== null && value !== undefined && value !== '') {
+                acc[key] = value;
+            }
+            return acc;
+        }, {} as Record<string, string>);
+        const params = new URLSearchParams(filteredQuery)
         const q = params.size == 0 ? '' : '?' + params.toString()
         return instance.get(`/api/processing-content${q}`).then((res: AxiosResponse<ScrollResponse<ProcessingContent>>) => res.data);
     }
@@ -139,6 +206,60 @@ class ActuatorService {
     async info() {
         return instance.get(`/actuator/info`);
     }
+}
+
+
+// TODO 因为携带了样式数据不应该放这, 后面再该
+export interface TaggableStatus {
+    label: string
+    value: string
+    type: 'primary' | 'success' | 'info' | 'warning' | 'danger'
+}
+
+export const fileContentStatuses: TaggableStatus[] = [
+    {"label": "正常", "value": "NORMAL", "type": "success"},
+    {"label": "已下载", "value": "DOWNLOADED", "type": "info"},
+    {"label": "变量错误", "value": "VARIABLE_ERROR", "type": "danger"},
+    {"label": "已存在", "value": "TARGET_EXISTS", "type": "warning"},
+    {"label": "文件冲突", "value": "FILE_CONFLICT", "type": "danger"},
+    {"label": "准备替换", "value": "READY_REPLACE", "type": "info"},
+    {"label": "被替换", "value": "REPLACED", "type": "info"},
+    {"label": "已替换", "value": "REPLACE", "type": "info"},
+]
+const fileStatusMapping = fileContentStatuses.reduce((acc: { [key: string]: TaggableStatus }, cur) => {
+    acc[cur.value] = cur;
+    return acc;
+}, {});
+
+export function fileStatusOf(status: string | undefined): TaggableStatus {
+    return status ? fileStatusMapping[status] : {
+        "label": status ?? "未知",
+        "value": status ?? "UNKNOWN",
+        "type": "warning"
+    };
+}
+
+export const processingContentStatuses: TaggableStatus[] = [
+    {"label": "等待命名", "value": "WAITING_TO_RENAME", "type": "primary"},
+    {"label": "已命名", "value": "RENAMED", "type": "success"},
+    {"label": "已过滤", "value": "FILTERED", "type": "info"},
+    {"label": "无文件", "value": "NO_FILES", "type": "info"},
+    {"label": "已取消", "value": "CANCELLED", "type": "info"},
+    {"label": "已存在", "value": "TARGET_ALREADY_EXISTS", "type": "warning"},
+    {"label": "下载失败", "value": "DOWNLOAD_FAILED", "type": "danger"},
+    {"label": "处理异常", "value": "FAILURE", "type": "danger"},
+]
+const itemStatusMapping = processingContentStatuses.reduce((acc: { [key: string]: TaggableStatus }, cur) => {
+    acc[cur.value] = cur;
+    return acc;
+}, {});
+
+export function itemStatusOf(status: string | undefined): TaggableStatus {
+    return status ? itemStatusMapping[status] : {
+        "label": status ?? "未知",
+        "value": status ?? "UNKNOWN",
+        "type": "warning"
+    };
 }
 
 export const processingContentService = new ProcessingContentService();
