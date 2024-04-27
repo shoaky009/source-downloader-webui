@@ -80,8 +80,7 @@
 import {ElButton, ElSwitch, ElTag} from "element-plus";
 import {Plus,} from "@element-plus/icons-vue";
 import {ref} from "vue";
-import {Processor} from "~/services/processing-content.service";
-import {processorService} from "~/services/data.service";
+import {Processor, processorService} from "~/services/data.service";
 
 import "vue3-json-viewer/dist/index.css";
 import ShowSourceState from "~/views/biz/ShowSourceState.vue";
