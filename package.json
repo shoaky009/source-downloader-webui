@@ -16,6 +16,7 @@
     "clipboard": "^2.0.11",
     "el-table-infinite-scroll": "^3.0.3",
     "element-plus": "^2.6.2",
+    "pnpm": "^9.0.6",
     "vue": "^3.4.21",
     "vue-router": "^4.3.2",
     "vue3-json-editor": "^1.1.5",

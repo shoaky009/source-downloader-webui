@@ -36,6 +36,9 @@
       >{{ index + ':' + v }}
       </el-tag>
     </el-descriptions-item>
+    <el-descriptions-item label="错误:" v-if="file?.errors && file?.errors?.length > 0">
+      <el-tag v-for="(error, index) in file?.errors" :key="index" type="danger">{{ error }}</el-tag>
+    </el-descriptions-item>
   </el-descriptions>
 </template>
 
