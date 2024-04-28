@@ -113,15 +113,15 @@
   </el-dialog>
 </template>
 
-
 <script setup lang="ts">
 import {onMounted, ref} from 'vue';
 import {
   FileContent,
+  fileStatusGrouping,
+  itemStatusOf,
   ProcessingContent,
   processingContentService,
-  processingContentStatuses,
-  itemStatusOf, fileStatusOf, TaggableStatus
+  processingContentStatuses
 } from "~/services/data.service";
 import {debounce} from "lodash";
 import ItemContentDetail from "~/components/ItemContentDetail.vue";
@@ -173,19 +173,6 @@ const handleFileContentOpen = (content: ProcessingContent) => {
   fileContents.value = content.itemContent.fileContents;
   showFileContentDialog.value = true;
 }
-const fileStatusGrouping = (fileContents: FileContent[]): Map<TaggableStatus, number> => {
-  const grouping = new Map<string, number>();
-  for (const {status} of fileContents) {
-    grouping.set(status, (grouping.get(status) || 0) + 1);
-  }
-
-  const result = new Map<TaggableStatus, number>();
-  for (const [key, value] of grouping) {
-    result.set(fileStatusOf(key), value);
-  }
-  return result
-}
-
 
 // query condition
 const selectedProcessors = ref<string[]>([]);

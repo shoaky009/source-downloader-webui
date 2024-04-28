@@ -262,6 +262,19 @@ export function itemStatusOf(status: string | undefined): TaggableStatus {
     };
 }
 
+export function fileStatusGrouping(fileContents: FileContent[]): Map<TaggableStatus, number> {
+    const grouping = new Map<string, number>();
+    for (const {status} of fileContents) {
+        grouping.set(status, (grouping.get(status) || 0) + 1);
+    }
+
+    const result = new Map<TaggableStatus, number>();
+    for (const [key, value] of grouping) {
+        result.set(fileStatusOf(key), value);
+    }
+    return result
+}
+
 export const processingContentService = new ProcessingContentService();
 export const processorService = new ProcessorService();
 export const componentService = new ComponentService();
