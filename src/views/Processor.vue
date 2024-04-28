@@ -16,13 +16,16 @@
         <el-switch v-model="scope.row.enabled" @change="handleEnable(scope.$index, scope.row)"/>
       </template>
     </el-table-column>
-    <el-table-column label="Details" width="100%" align="center">
-      <template #default="scope">
-        <el-tooltip content="数据源的处理进度">
-          <el-button size="small" @click="handleStateClick(scope.row)">
-            Pointer
-          </el-button>
+    <el-table-column width="100%" align="center">
+      <template #header>
+        <el-tooltip effect="dark" :content="detailDescription" placement="top" raw-content>
+          Details
         </el-tooltip>
+      </template>
+      <template #default="scope">
+        <el-button size="small" @click="handleStateClick(scope.row)">
+          Pointer
+        </el-button>
       </template>
     </el-table-column>
     <el-table-column label="Category" width="100%" align="center">
@@ -72,8 +75,12 @@
   </el-table>
 
   <ShowSourceState :processor-name="stateProcessor" v-model="stateJsonViewer"/>
-  <ProcessorDryRun :processor-name="dryRunProcessor" :open-form="openDryRunForm" @dialog-close="handleDryRunFormClose"/>
-  <ProcessorForm v-model="creationFormOpen"/>
+  <el-dialog v-model="openDryRunForm" center>
+    <ProcessorDryRun :processor-name="dryRunProcessor"/>
+  </el-dialog>
+  <el-dialog v-model="creationFormOpen">
+    <ProcessorForm/>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -95,6 +102,11 @@ const operationDescription = `
 移动: 执行可移动的Item<br/>
 </div>
 `;
+const detailDescription = `
+<div>
+Pointer: 数据源的处理进度<br/>
+</div>
+`
 
 const processors = ref<Processor[]>([]);
 const loadMore = () => {

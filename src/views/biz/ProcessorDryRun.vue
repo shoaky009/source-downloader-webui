@@ -1,27 +1,19 @@
 <template>
-  <el-dialog
-      v-model="openForm"
-      width="500"
-      center
-      @close="handleDialogClose"
-  >
-    <el-form :model="dryRunFormData" label-width="auto">
-      <el-form-item label="过滤已处理的Item">
-        <el-switch v-model="dryRunFormData.filterProcessed"/>
-      </el-form-item>
-      <el-form-item label="Pointer">
-        <json-editor
-            v-model="dryRunFormData.pointer"
-            mode="tree"
-            :ask-to-format="false"
-            :darkTheme="isDark"/>
-      </el-form-item>
-
-      <el-form-item>
-        <el-button type="primary" @click="handleDryRunFormSubmit">确认</el-button>
-      </el-form-item>
-    </el-form>
-  </el-dialog>
+  <el-form :model="dryRunFormData" label-width="auto">
+    <el-form-item label="过滤已处理的Item">
+      <el-switch v-model="dryRunFormData.filterProcessed"/>
+    </el-form-item>
+    <el-form-item label="Pointer">
+      <json-editor
+          v-model="dryRunFormData.pointer"
+          mode="tree"
+          :ask-to-format="false"
+          :darkTheme="isDark"/>
+    </el-form-item>
+    <el-form-item>
+      <el-button type="primary" @click="handleDryRunFormSubmit">确认</el-button>
+    </el-form-item>
+  </el-form>
 
   <el-dialog v-model="dryRunOpen" @close="() => dryRunResult = []">
     <el-table
@@ -87,7 +79,6 @@ import ItemContentDetail from "~/components/ItemContentDetail.vue";
 
 const props = defineProps<{
   processorName?: string,
-  openForm: boolean,
 }>();
 
 const dryRunFormData = reactive({
@@ -95,11 +86,7 @@ const dryRunFormData = reactive({
   pointer: null
 })
 
-const {processorName, openForm} = toRefs(props)
-const emit = defineEmits(['dialogClose'])
-const handleDialogClose = () => {
-  emit('dialogClose', {open: false})
-}
+const {processorName} = toRefs(props)
 
 const loading = ref(false)
 const handleDryRunFormSubmit = () => {
@@ -109,7 +96,6 @@ const handleDryRunFormSubmit = () => {
     processorService.dryRun(processorName.value, dryRunFormData)
         .then(response => {
           dryRunResult.value = response.data
-          console.log(dryRunResult.value)
         }).finally(() => {
       loading.value = false
     })

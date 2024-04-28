@@ -5,19 +5,19 @@
         <ProcessorSelector @update:selected="handleSelectedProcessors"/>
       </el-col>
       <el-col :span="4">
-        <el-select v-model="status"
-                   multiple
-                   placeholder="状态"
-                   collapse-tags
-                   :max-collapse-tags="2"
-                   @blur="handleStatusSelected"
+        <el-select
+            v-model="status"
+            multiple
+            placeholder="状态"
+            collapse-tags
+            :max-collapse-tags="2"
+            @blur="handleStatusSelected"
         >
           <el-option
               v-for="item in processingContentStatuses"
               :key="item.value"
               :label="item.label"
               :value="item.value"
-
           />
         </el-select>
       </el-col>
@@ -77,16 +77,14 @@
         <el-tag type="info">
           命名次数:{{ scope.row.renameTimes }}
         </el-tag>
-        <el-tag
-            v-for="[status, count] in fileStatusGrouping(scope.row.itemContent.fileContents)"
-            :key="status.value" :type="status.type"
-        >
+        <el-tag v-for="[status, count] in fileStatusGrouping(scope.row.itemContent.fileContents)"
+                :key="status.value" :type="status.type">
           {{ status.label }}:{{ count }}
         </el-tag>
       </template>
     </el-table-column>
-    <el-table-column prop="createTime" label="CreateTime"/>
-    <el-table-column label="Operation">
+    <el-table-column prop="createTime" label="创建时间"/>
+    <el-table-column label="操作">
       <template #default="scope">
         <el-popconfirm title="确定重新处理?" @confirm="handleReprocess(scope.row)">
           <template #reference>
