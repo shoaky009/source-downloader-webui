@@ -10,12 +10,15 @@
           :ask-to-format="false"
           :darkTheme="isDark"/>
     </el-form-item>
+    <el-form-item label="流式响应">
+      <el-switch v-model="streamable"/>
+    </el-form-item>
     <el-form-item>
       <el-button type="primary" @click="handleDryRunFormSubmit">确认</el-button>
     </el-form-item>
   </el-form>
 
-  <el-dialog v-model="dryRunOpen" @close="() => dryRunResult = []">
+  <el-dialog v-model="dryRunOpened" @close="() => dryRunResult = []">
     <el-table
         :data="dryRunResult"
         row-key="itemHash"
@@ -76,6 +79,7 @@ import {
 } from "~/services/data.service";
 import {reactive, ref, toRefs} from "vue";
 import ItemContentDetail from "~/components/ItemContentDetail.vue";
+import {c} from "vite/dist/node/types.d-aGj9QkWt";
 
 const props = defineProps<{
   processorName?: string,
@@ -85,25 +89,90 @@ const dryRunFormData = reactive({
   filterProcessed: true,
   pointer: null
 })
+const streamable = ref(true)
 
 const {processorName} = toRefs(props)
 
 const loading = ref(false)
-const handleDryRunFormSubmit = () => {
-  if (processorName.value) {
-    dryRunOpen.value = true
-    loading.value = true
-    processorService.dryRun(processorName.value, dryRunFormData)
-        .then(response => {
-          dryRunResult.value = response.data
-        }).finally(() => {
-      loading.value = false
-    })
+const handleDryRunFormSubmit = async () => {
+  if (!processorName.value) {
+    return
   }
+  dryRunOpened.value = true
+  loading.value = true
+  if (!streamable.value) {
+    const response = await processorService.dryRun(processorName.value, dryRunFormData)
+        .finally(() => {
+          loading.value = false
+        })
+    dryRunResult.value = response.data
+    return
+  }
+
+  const response = await processorService.dryRunStream(processorName.value, dryRunFormData)
+  const body = response.body
+  if (!body) {
+    return
+  }
+
+  let firstLineFlag = true
+  for await (const line of makeStreamLineIterator(response.body, () => !dryRunOpened.value)) {
+    if (firstLineFlag) {
+      loading.value = false
+      firstLineFlag = false
+    }
+    updateDryRunTable(line)
+  }
+  loading.value = false
 };
 
+async function* makeStreamLineIterator(
+    readerStream: ReadableStream<Uint8Array>,
+    terminateSignal: () => boolean
+) {
+  const reader = readerStream.getReader();
+  let {value: chunk, done: readerDone} = await reader.read();
+  const utf8Decoder = new TextDecoder('utf-8');
+  let partialLine = chunk ? utf8Decoder.decode(chunk, {stream: true}) : '';
+
+  const re = /\r\n|\n|\r/gm;
+  let startIndex = 0;
+  for (; ;) {
+    if (terminateSignal()) {
+      await reader.cancel('terminate signal received')
+      break
+    }
+
+    let result = re.exec(partialLine);
+    if (!result) {
+      if (readerDone) {
+        break;
+      }
+      let remainder = partialLine.substring(startIndex);
+      ({value: chunk, done: readerDone} = await reader.read());
+      partialLine = remainder + (chunk ? utf8Decoder.decode(chunk, {stream: true}) : '');
+      startIndex = re.lastIndex = 0;
+      continue;
+    }
+    yield partialLine.substring(startIndex, result.index);
+    startIndex = re.lastIndex;
+  }
+  if (startIndex < partialLine.length) {
+    yield partialLine.substring(startIndex);
+  }
+}
+
+const updateDryRunTable = (json: string) => {
+  try {
+    const content = JSON.parse(json)
+    dryRunResult.value.push(content)
+  } catch (e) {
+    console.warn('Failed to parse line:', json);
+  }
+}
+
 // result
-const dryRunOpen = ref(false)
+const dryRunOpened = ref(false)
 const dryRunResult = ref<ItemContent[]>([])
 
 const fileContents = ref<FileContent[]>([]);
