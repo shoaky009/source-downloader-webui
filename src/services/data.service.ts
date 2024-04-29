@@ -2,7 +2,7 @@ import axios, {AxiosResponse, InternalAxiosRequestConfig} from 'axios';
 import {ElMessage} from "element-plus";
 
 const isDev = () => import.meta.env.MODE === 'development';
-const API_BASE_URL = () => import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+const API_BASE_URL = () => isDev() ? (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080') : `${location.origin}`;
 
 // ??不知道哪里声明类型
 interface RequestConfig extends InternalAxiosRequestConfig<RequestConfig> {
@@ -10,7 +10,7 @@ interface RequestConfig extends InternalAxiosRequestConfig<RequestConfig> {
 }
 
 const instance = axios.create({
-    baseURL: isDev() ? API_BASE_URL() : `${location.origin}`,
+    baseURL: API_BASE_URL(),
 });
 
 instance.interceptors.response.use(response => {
@@ -161,6 +161,20 @@ class ProcessorService {
 
     async dryRun(name: string, options: object) {
         return instance.post(`/api/processor/${name}/dry-run`, options);
+    }
+
+    async dryRunStream(name: string, options: object) {
+        const response = await fetch(`${API_BASE_URL()}/api/processor/${name}/dry-run-stream`, {
+            method: 'post',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(options)
+        })
+        if (!response.ok) {
+            throw new Error('Failed to fetch dry run data')
+        }
+        return response
     }
 
     async enable(name: string) {
