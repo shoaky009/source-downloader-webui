@@ -1,28 +1,28 @@
 <template>
-  <el-table :data="components" style="width: 100%">
-    <el-table-column label="Name" width="180" align="center">
+  <el-table :data="components" style="width: 100%" v-loading="loading">
+    <el-table-column label="名称" width="180" align="center">
       <template #default="scope">
         <span>{{ scope.row.name }}</span>
       </template>
     </el-table-column>
-    <el-table-column label="Type" width="180" align="center">
+    <el-table-column label="类型" width="180" align="center">
       <template #default="scope">
         <span>{{ scope.row.type }}</span>
       </template>
     </el-table-column>
-    <el-table-column label="TypeName" width="180" align="center">
+    <el-table-column label="类型名称" width="180" align="center">
       <template #default="scope">
         <span>{{ scope.row.typeName }}</span>
       </template>
     </el-table-column>
-    <el-table-column prop="refs" label="Refs" align="center">
+    <el-table-column prop="引用" label="Refs" align="center">
       <template #default="scope">
         <el-tag v-for="item in scope.row.refs">
           {{ item }}
         </el-tag>
       </template>
     </el-table-column>
-    <el-table-column label="Operations">
+    <el-table-column label="操作">
       <template #default="scope">
         <el-button size="small" @click="handleEdit(scope.$index, scope.row)">
           WIP编辑
@@ -42,39 +42,34 @@
   </el-table>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {ElButton, ElTag,} from "element-plus";
-import {defineComponent, ref} from "vue";
+import {ref, onMounted} from "vue";
 import {Component, componentService} from "~/services/data.service";
 
-export default defineComponent({
-  name: 'Component',
-  data() {
-    return {
-      components: ref<Component[]>([]),
-    };
-  },
-  methods: {
-    loadMore() {
-      componentService.query({}).then(response => {
-        this.components = response
-      })
-    }
-  },
-  created() {
-    this.loadMore();
-  },
-  setup() {
-    const handleEdit = (index: number, component: Component) => {
-      console.log(index, component)
-    }
-    const handleDelete = (index: number, component: Component) => {
-      console.log(index, component)
-    }
-    const handleReload = async (component: Component) => {
-      await componentService.reload(component)
-    }
-    return {handleEdit, handleDelete, handleReload}
-  },
-});
+const loading = ref(false)
+const components = ref<Component[]>([])
+
+const loadMore = async () => {
+  loading.value = true
+  try {
+    components.value = await componentService.query({})
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadMore)
+
+const handleEdit = (index: number, component: Component) => {
+  console.log(index, component)
+}
+
+const handleDelete = (index: number, component: Component) => {
+  console.log(index, component)
+}
+
+const handleReload = async (component: Component) => {
+  await componentService.reload(component)
+}
 </script>
