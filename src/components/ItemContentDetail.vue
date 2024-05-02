@@ -28,7 +28,6 @@
 </template>
 
 <script setup lang="ts">
-import {defineProps} from 'vue';
 import {ItemContent} from "~/services/data.service";
 
 const props = defineProps<{ content?: ItemContent | null }>();

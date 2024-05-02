@@ -1,25 +1,34 @@
 <template>
-  <el-button :icon="Plus" circle @click="handleCreateForm"/>
-  <el-table :data="processors" style="width: 100%">
-    <el-table-column label="Name" width="180" align="center">
+  <el-row>
+    <el-col :span="1">
+      <el-button :icon="Plus" circle @click="handleCreateForm"/>
+    </el-col>
+    <el-col :span="4">
+      <el-input v-model="processNameFilter" placeholder="处理器名称" clearable/>
+    </el-col>
+  </el-row>
+
+  <el-table
+      :data="filteredData"
+      style="width: 100%"
+      v-loading="loading"
+
+  >
+    <el-table-column label="名称" width="180" align="center">
       <template #default="scope">
         <span>{{ scope.row.name }}</span>
       </template>
     </el-table-column>
-    <el-table-column label="LastTriggerTime" width="180" align="center">
+    <el-table-column label="上一次触发时间" width="180" align="center">
       <template #default="scope">
         <span>{{ scope.row.lastTriggerTime }}</span>
       </template>
     </el-table-column>
-    <el-table-column label="Enabled" width="100%" align="center">
-      <template #default="scope">
-        <el-switch v-model="scope.row.enabled" @change="handleEnable(scope.$index, scope.row)"/>
-      </template>
-    </el-table-column>
+
     <el-table-column width="100%" align="center">
       <template #header>
         <el-tooltip effect="dark" :content="detailDescription" placement="top" raw-content>
-          Details
+          详情
         </el-tooltip>
       </template>
       <template #default="scope">
@@ -28,22 +37,27 @@
         </el-button>
       </template>
     </el-table-column>
-    <el-table-column label="Category" width="100%" align="center">
+    <el-table-column label="类目" width="100%" align="center">
       <template #default="scope">
         <span>{{ scope.row.category }}</span>
       </template>
     </el-table-column>
-    <el-table-column prop="tags" label="Tags" width="100%" align="center">
+    <el-table-column prop="tags" label="标签" width="100%" align="center">
       <template #default="scope">
         <el-tag v-for="item in scope.row.tags">
           {{ item }}
         </el-tag>
       </template>
     </el-table-column>
+    <el-table-column label="开启" width="100%" align="center">
+      <template #default="scope">
+        <el-switch v-model="scope.row.enabled" @change="handleEnable(scope.$index, scope.row)"/>
+      </template>
+    </el-table-column>
     <el-table-column>
       <template #header>
         <el-tooltip effect="dark" :content="operationDescription" placement="top" raw-content>
-          Operations
+          操作
         </el-tooltip>
       </template>
 
@@ -86,7 +100,7 @@
 <script setup lang="ts">
 import {ElButton, ElSwitch, ElTag} from "element-plus";
 import {Plus,} from "@element-plus/icons-vue";
-import {ref} from "vue";
+import {computed, ref} from "vue";
 import {Processor, processorService} from "~/services/data.service";
 
 import "vue3-json-viewer/dist/index.css";
@@ -108,13 +122,26 @@ Pointer: 数据源的处理进度<br/>
 </div>
 `
 
+const loading = ref(false);
 const processors = ref<Processor[]>([]);
 const loadMore = () => {
+  loading.value = true
   processorService.query().then(response => {
     processors.value = response;
-  });
+  }).finally(() => {
+    loading.value = false
+  })
 };
 
+const processNameFilter = ref<string>('')
+const filteredData = computed(() => {
+  if (processNameFilter.value) {
+    return processors.value.filter(item => item.name.includes(processNameFilter.value));
+  } else {
+    return processors.value;
+  }
+});
+//=========
 const creationFormOpen = ref(false)
 const handleCreateForm = () => {
   creationFormOpen.value = true
@@ -149,10 +176,6 @@ const dryRunProcessor = ref<string>()
 const handleDryRun = (processor: Processor) => {
   openDryRunForm.value = true
   dryRunProcessor.value = processor.name
-};
-
-const handleDryRunFormClose = () => {
-  openDryRunForm.value = false
 };
 
 //=========

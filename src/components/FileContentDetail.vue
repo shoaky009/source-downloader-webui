@@ -43,7 +43,6 @@
 </template>
 
 <script setup lang="ts">
-import {defineProps} from 'vue';
 import {FileContent, fileStatusOf} from "~/services/data.service";
 
 const props = defineProps<{ file?: FileContent | null }>();
