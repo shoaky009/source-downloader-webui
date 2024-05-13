@@ -61,7 +61,6 @@
         <el-tag size="large" :type="itemStatusOf(scope.row.status).type">
           状态:{{ itemStatusOf(scope.row.status).label }}
         </el-tag>
-        <el-tag size="large" type="info">Hash:{{ scope.row.itemHash }}</el-tag>
       </template>
     </el-table-column>
     <el-table-column prop="itemContent.sourceItem.title" label="条目" min-width="300" width="auto">
@@ -83,7 +82,17 @@
         </el-tag>
       </template>
     </el-table-column>
-    <el-table-column prop="createTime" label="创建时间"/>
+    <el-table-column label="其他">
+      <template #default="scope">
+        <el-descriptions :column="1">
+          <el-descriptions-item label="Hash:">{{ scope.row.itemHash }}</el-descriptions-item>
+          <template v-if="scope.row.failureReason">
+            <el-descriptions-item label="错误信息:">{{ scope.row.failureReason }}</el-descriptions-item>
+          </template>
+          <el-descriptions-item label="创建时间:">{{ scope.row.createTime }}</el-descriptions-item>
+        </el-descriptions>
+      </template>
+    </el-table-column>
     <el-table-column label="操作">
       <template #default="scope">
         <el-popconfirm title="确定重新处理?" @confirm="handleReprocess(scope.row)">

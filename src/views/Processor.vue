@@ -104,9 +104,9 @@ import {computed, ref} from "vue";
 import {Processor, processorService} from "~/services/data.service";
 
 import "vue3-json-viewer/dist/index.css";
-import ShowSourceState from "~/views/biz/ShowSourceState.vue";
-import ProcessorDryRun from "~/views/biz/ProcessorDryRun.vue";
-import ProcessorForm from "~/views/biz/ProcessorForm.vue";
+import ShowSourceState from "~/components/ShowSourceState.vue";
+import ProcessorDryRun from "~/components/ProcessorDryRun.vue";
+import ProcessorForm from "~/components/ProcessorForm.vue";
 
 const operationDescription = `
 <div>
