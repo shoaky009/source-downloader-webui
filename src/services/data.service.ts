@@ -42,6 +42,7 @@ export interface ProcessingContent {
     itemContent: ItemContent,
     status: string,
     renameTimes: number,
+    failureReason: string,
     modifyTime: string,
     createTime: string
 }

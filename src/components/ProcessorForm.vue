@@ -205,7 +205,7 @@
 </template>
 <script setup lang="ts">
 import {reactive, ref, toRefs} from 'vue'
-import ComponentSelector from "~/views/biz/ComponentSelector.vue";
+import ComponentSelector from "~/components/ComponentSelector.vue";
 import {ElInput} from "element-plus";
 
 const props = defineProps<{

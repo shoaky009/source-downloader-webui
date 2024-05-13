@@ -9,6 +9,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     BaseHeader: typeof import('./components/layouts/BaseHeader.vue')['default']
     BaseSide: typeof import('./components/layouts/BaseSide.vue')['default']
+    ComponentSelector: typeof import('./components/ComponentSelector.vue')['default']
     DynamicTag: typeof import('./components/DynamicTag.vue')['default']
     ElAffix: typeof import('element-plus/es')['ElAffix']
     ElButton: typeof import('element-plus/es')['ElButton']
@@ -41,9 +42,12 @@ declare module 'vue' {
     FileContentDetail: typeof import('./components/FileContentDetail.vue')['default']
     ItemContentDetail: typeof import('./components/ItemContentDetail.vue')['default']
     Processor: typeof import('./components/icons/Processor.vue')['default']
+    ProcessorDryRun: typeof import('./components/ProcessorDryRun.vue')['default']
+    ProcessorForm: typeof import('./components/ProcessorForm.vue')['default']
     ProcessorSelector: typeof import('./components/ProcessorSelector.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ShowSourceState: typeof import('./components/ShowSourceState.vue')['default']
     StringArray: typeof import('./components/StringArray.vue')['default']
   }
   export interface ComponentCustomProperties {
