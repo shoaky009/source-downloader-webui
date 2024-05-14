@@ -1,5 +1,6 @@
 import axios, {AxiosResponse, InternalAxiosRequestConfig} from 'axios';
 import {ElMessage} from "element-plus";
+import {useEventSource} from "@vueuse/core";
 
 const isDev = () => import.meta.env.MODE === 'development';
 const API_BASE_URL = () => isDev() ? (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080') : `${location.origin}`;
@@ -206,6 +207,11 @@ class ComponentService {
 
     async reload(component: Component) {
         return instance.get(`/api/component/${component.type}/${component.typeName}/${component.name}/reload`, {alertMessage: '重载成功'});
+    }
+
+     stateStream(id: string[]): EventSource | null {
+        const {eventSource} = useEventSource(`${API_BASE_URL()}/api/component/state-stream?id=${id.join(',')}`, ['component-state'])
+        return eventSource.value
     }
 }
 
