@@ -54,11 +54,11 @@
       style="width: 100%"
       ref="tableRef"
   >
-    <el-table-column prop="id" width="auto">
+    <el-table-column prop="id" width="200px">
       <template #default="scope">
-        <el-tag size="large" type="info">ID:{{ scope.row.id }}</el-tag>
-        <el-tag size="large" type="info">处理器:{{ scope.row.processorName }}</el-tag>
-        <el-tag size="large" :type="itemStatusOf(scope.row.status).type">
+        <el-tag size="large" type="info" class="column-layout">ID:{{ scope.row.id }}</el-tag>
+        <el-tag size="large" type="info" class="column-layout">处理器:{{ scope.row.processorName }}</el-tag>
+        <el-tag size="large" :type="itemStatusOf(scope.row.status).type" class="column-layout">
           状态:{{ itemStatusOf(scope.row.status).label }}
         </el-tag>
       </template>
@@ -68,33 +68,25 @@
         <ItemContentDetail :content="scope.row.itemContent"/>
       </template>
     </el-table-column>
-    <el-table-column prop="itemContent.fileContents.length" label="文件">
+    <el-table-column prop="itemContent.fileContents.length" label="文件" align="center" width="100px">
       <template #default="scope">
-        <el-button size="small" @click="handleFileContentOpen(scope.row)">
-          查看{{ scope.row.itemContent.fileContents.length }}个文件
-        </el-button>
-        <el-tag type="info">
-          命名次数:{{ scope.row.renameTimes }}
-        </el-tag>
-        <el-tag v-for="[status, count] in fileStatusGrouping(scope.row.itemContent.fileContents)"
-                :key="status.value" :type="status.type">
-          {{ status.label }}:{{ count }}
-        </el-tag>
+        <div class="column-layout">
+          <el-button size="small" @click="handleFileContentOpen(scope.row)">
+            查看{{ scope.row.itemContent.fileContents.length }}个文件
+          </el-button>
+          <el-tag type="info">
+            命名次数:{{ scope.row.renameTimes }}
+          </el-tag>
+          <el-tag v-for="[status, count] in fileStatusGrouping(scope.row.itemContent.fileContents)"
+                  :key="status.value" :type="status.type">
+            {{ status.label }}:{{ count }}
+          </el-tag>
+        </div>
       </template>
     </el-table-column>
-    <el-table-column label="其他">
+    <el-table-column label="操作" align="center" width="100px">
       <template #default="scope">
-        <el-descriptions :column="1">
-          <el-descriptions-item label="Hash:">{{ scope.row.itemHash }}</el-descriptions-item>
-          <template v-if="scope.row.failureReason">
-            <el-descriptions-item label="错误信息:">{{ scope.row.failureReason }}</el-descriptions-item>
-          </template>
-          <el-descriptions-item label="创建时间:">{{ scope.row.createTime }}</el-descriptions-item>
-        </el-descriptions>
-      </template>
-    </el-table-column>
-    <el-table-column label="操作">
-      <template #default="scope">
+        <div class="column-layout">
         <el-popconfirm title="确定重新处理?" @confirm="handleReprocess(scope.row)">
           <template #reference>
             <el-button size="small" type="warning">重新处理</el-button>
@@ -105,6 +97,18 @@
             <el-button size="small" type="danger">删除</el-button>
           </template>
         </el-popconfirm>
+        </div>
+      </template>
+    </el-table-column>
+    <el-table-column label="其他" align="center" width="350px">
+      <template #default="scope">
+        <el-descriptions :column="1">
+          <el-descriptions-item label="Hash:">{{ scope.row.itemHash }}</el-descriptions-item>
+          <template v-if="scope.row.failureReason">
+            <el-descriptions-item label="错误信息:">{{ scope.row.failureReason }}</el-descriptions-item>
+          </template>
+          <el-descriptions-item label="创建时间:">{{ scope.row.createTime }}</el-descriptions-item>
+        </el-descriptions>
       </template>
     </el-table-column>
   </el-table>
@@ -251,3 +255,11 @@ const handleDelete = (row: ProcessingContent) => {
   })
 }
 </script>
+
+<style>
+.column-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+</style>
