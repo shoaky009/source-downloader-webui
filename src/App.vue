@@ -15,6 +15,8 @@
 #app {
   text-align: center;
   color: var(--ep-text-color-primary);
+  height: 100vh;
+  overflow: hidden;
 }
 
 .main-container {
