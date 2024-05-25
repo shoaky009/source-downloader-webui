@@ -3,6 +3,8 @@
     <el-descriptions-item label="下载路径:">{{ file?.fileDownloadPath }}</el-descriptions-item>
     <el-descriptions-item label="目标路径:">{{ `${file?.targetSavePath}/${file?.targetFilename}` }}
     </el-descriptions-item>
+    <el-descriptions-item label="冲突路径:" v-if="file?.existTargetPath">{{ file?.existTargetPath }}
+    </el-descriptions-item>
     <el-descriptions-item label="状态:">
       <el-tag size="large" :type="fileStatusOf(file?.status).type">
         {{ fileStatusOf(file?.status).label }}

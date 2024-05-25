@@ -17,7 +17,7 @@
         <el-text type="info" class="w-400px ellipsis-text" >{{ sourceItem?.downloadUri }}</el-text>
       </el-tooltip>
     </el-descriptions-item>
-    <el-descriptions-item label="变量:" v-if="sourceItem?.tags?.length && sourceItem?.tags?.length > 0">
+    <el-descriptions-item label="标签:" v-if="sourceItem?.tags?.length && sourceItem?.tags?.length > 0">
       <el-tag v-for="(tag, index) in sourceItem?.tags" :key="index">{{ tag }}</el-tag>
     </el-descriptions-item>
     <el-descriptions-item label="属性:" v-if="Object.keys(sourceItem?.attrs??{}).length > 0">

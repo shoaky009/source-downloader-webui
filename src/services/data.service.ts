@@ -77,6 +77,7 @@ export interface FileContent {
     errors: string[],
     status: string,
     fileUri: string,
+    existTargetPath: string,
 }
 
 export interface Processor {
@@ -209,7 +210,7 @@ class ComponentService {
         return instance.get(`/api/component/${component.type}/${component.typeName}/${component.name}/reload`, {alertMessage: '重载成功'});
     }
 
-     stateStream(id: string[]): EventSource | null {
+    stateStream(id: string[]): EventSource | null {
         const {eventSource} = useEventSource(`${API_BASE_URL()}/api/component/state-stream?id=${id.join(',')}`, ['component-state'])
         return eventSource.value
     }
