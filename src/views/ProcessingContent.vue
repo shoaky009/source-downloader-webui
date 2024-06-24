@@ -152,7 +152,7 @@ const loadMore = (clear: boolean = false) => {
     'processorName': selectedProcessors.value.join(','),
     'status': status.value.join(','),
     'itemHash': itemHash.value,
-    'itemTitle': itemTitle.value,
+    'item.title': itemTitle.value,
     'createTime.begin': createTimeRange?.value?.at(0),
     'createTime.end': createTimeRange?.value?.at(1),
   }).then(response => {
