@@ -79,7 +79,6 @@ import {
 } from "~/services/data.service";
 import {reactive, ref, toRefs} from "vue";
 import ItemContentDetail from "~/components/ItemContentDetail.vue";
-import {c} from "vite/dist/node/types.d-aGj9QkWt";
 
 const props = defineProps<{
   processorName?: string,
