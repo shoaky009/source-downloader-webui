@@ -1,18 +1,19 @@
-import axios, {AxiosResponse, InternalAxiosRequestConfig} from 'axios';
+import axios, {AxiosResponse} from 'axios';
 import {ElMessage} from "element-plus";
 import {useEventSource} from "@vueuse/core";
 
 const isDev = () => import.meta.env.MODE === 'development';
 const API_BASE_URL = () => isDev() ? (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080') : `${location.origin}`;
 
-// ??不知道哪里声明类型
-interface RequestConfig extends InternalAxiosRequestConfig<RequestConfig> {
-    alertMessage: string
-}
-
 const instance = axios.create({
     baseURL: API_BASE_URL(),
 });
+
+declare module 'axios' {
+    export interface AxiosRequestConfig {
+        alertMessage?: string;
+    }
+}
 
 instance.interceptors.response.use(response => {
     if (response.config.alertMessage) {
