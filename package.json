@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@axolo/json-editor-vue": "^0.3.2",
+    "@lljj/vue-json-schema-form": "^1.19.0",
     "axios": "^1.6.8",
     "clipboard": "^2.0.11",
     "el-table-infinite-scroll": "^3.0.3",
@@ -32,7 +33,7 @@
     "typescript": "^5.4.3",
     "unocss": "^0.58.6",
     "unplugin-vue-components": "^0.26.0",
-    "vite": "^5.2.5",
+    "vite": "^5.4.2",
     "vite-ssg": "^0.23.6",
     "vue-tsc": "^2.0.7"
   },
