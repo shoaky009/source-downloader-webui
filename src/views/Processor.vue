@@ -136,7 +136,9 @@ const loadMore = () => {
 const processNameFilter = ref<string>('')
 const filteredData = computed(() => {
   if (processNameFilter.value) {
-    return processors.value.filter(item => item.name.includes(processNameFilter.value));
+    return processors.value.filter(item =>
+        item.name.toLowerCase().includes(processNameFilter.value.toLowerCase())
+    )
   } else {
     return processors.value;
   }
