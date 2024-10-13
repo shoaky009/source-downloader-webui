@@ -9,11 +9,11 @@ const instance = axios.create({
     baseURL: API_BASE_URL(),
 });
 
-declare module 'axios' {
-    export interface AxiosRequestConfig {
-        alertMessage?: string;
-    }
-}
+// declare module 'axios' {
+//     export interface AxiosRequestConfig {
+//         alertMessage?: string;
+//     }
+// }
 
 instance.interceptors.response.use(response => {
     if (response.config.alertMessage) {
@@ -209,6 +209,16 @@ class ComponentService {
 
     async reload(component: Component) {
         return instance.get(`/api/component/${component.type}/${component.typeName}/${component.name}/reload`, {alertMessage: '重载成功'});
+    }
+
+    async types(query: Record<string, string>) {
+        const params = new URLSearchParams(query)
+        const q = params.size == 0 ? '' : '?' + params.toString()
+        return instance.get(`/api/component/types${q}`);
+    }
+
+    async getComponentPropSchema(type: string, typeName: string) {
+        return instance.get(`/api/component/${type}/${typeName}/metadata`);
     }
 
     stateStream(id: string[]): EventSource | null {

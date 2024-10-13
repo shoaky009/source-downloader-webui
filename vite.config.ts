@@ -4,6 +4,7 @@ import vue from '@vitejs/plugin-vue'
 
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import buildInfo from 'vite-plugin-build-info'
 
 import Unocss from 'unocss/vite'
 import {
@@ -27,11 +28,14 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         additionalData: `@use "~/styles/element/index.scss" as *;`,
+        silenceDeprecations: ['legacy-js-api'],
+        quietDeps: true
       },
     },
   },
   plugins: [
     vue(),
+    buildInfo({enableMeta: false, enableGlobal:true}),
     Components({
       // allow auto load markdown components under `./src/components/`
       extensions: ['vue', 'md'],

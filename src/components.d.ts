@@ -9,6 +9,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     BaseHeader: typeof import('./components/layouts/BaseHeader.vue')['default']
     BaseSide: typeof import('./components/layouts/BaseSide.vue')['default']
+    ComponentForm: typeof import('./components/ComponentForm.vue')['default']
     ComponentSelector: typeof import('./components/ComponentSelector.vue')['default']
     DynamicTag: typeof import('./components/DynamicTag.vue')['default']
     ElAffix: typeof import('element-plus/es')['ElAffix']
@@ -42,6 +43,7 @@ declare module 'vue' {
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     FileContentDetail: typeof import('./components/FileContentDetail.vue')['default']
     ItemContentDetail: typeof import('./components/ItemContentDetail.vue')['default']
+    PairFormItem: typeof import('./components/jsonschema/PairFormItem.vue')['default']
     Processor: typeof import('./components/icons/Processor.vue')['default']
     ProcessorDryRun: typeof import('./components/ProcessorDryRun.vue')['default']
     ProcessorForm: typeof import('./components/ProcessorForm.vue')['default']

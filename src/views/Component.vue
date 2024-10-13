@@ -1,4 +1,9 @@
 <template>
+  <el-row>
+    <el-col :span="1">
+      <el-button :icon="Plus" circle @click="handleCreateForm"/>
+    </el-col>
+  </el-row>
   <el-table :data="components"
             style="width: 100%"
             v-loading="loading"
@@ -44,12 +49,17 @@
       </template>
     </el-table-column>
   </el-table>
+  <el-dialog v-model="creationFormOpen">
+    <ComponentForm/>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
 import {ElButton, ElTag} from "element-plus";
 import {onMounted, ref} from "vue";
 import {Component, componentService} from "~/services/data.service";
+import {Plus} from "@element-plus/icons-vue";
+import ComponentForm from "~/components/ComponentForm.vue";
 
 const loading = ref(false)
 const components = ref<Component[]>([])
@@ -109,6 +119,12 @@ const recordExpanded = (_: Component, expandedRows: Component[]) => {
     eventSource.addEventListener('component-state', handleStateUpdate);
   }
 }
+
+// form
+const creationFormOpen = ref(false)
+const handleCreateForm = () => {
+  creationFormOpen.value = true
+};
 
 </script>
 
