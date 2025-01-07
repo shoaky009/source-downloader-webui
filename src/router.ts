@@ -5,6 +5,7 @@ import Component from './views/Component.vue'
 import Setting from './views/Setting.vue'
 
 const routes: RouteRecordRaw[] = [
+    {path: '/', redirect: '/processor'},
     {path: '/processor', name: 'Processor', component: Processor},
     {path: '/component', name: 'Component', component: Component},
     {path: '/processing-content', name: 'ProcessingContent', component: ProcessingContent},
