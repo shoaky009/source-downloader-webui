@@ -19,9 +19,14 @@
         <span>{{ scope.row.name }}</span>
       </template>
     </el-table-column>
-    <el-table-column label="上一次触发时间" width="180" align="center">
-      <template #default="scope">
-        <span>{{ scope.row.lastTriggerTime }}</span>
+    <el-table-column label="运行时" width="180" align="center">
+      <template #default="scope: { row:Processor }">
+        <div>
+          <p>创建时间: {{ toLocalDate(scope.row.runtime?.createdAt) }}</p>
+          <p>上一次处理开始: {{ toLocalDate(scope.row.runtime?.lastStartProcessTime) }}</p>
+          <p>上一次处理结束: {{ toLocalDate(scope.row.runtime?.lastEndProcessTime) }}</p>
+          <p>上一次错误: {{ toLocalDate(scope.row.runtime?.lastProcessFailedMessage) }}</p>
+        </div>
       </template>
     </el-table-column>
 
@@ -194,6 +199,10 @@ const handleRename = (processor: Processor) => {
 const handleDelete = (index: number, processor: Processor) => {
   console.log(index, processor);
 };
+
+const toLocalDate = (text:string) => {
+  return text ? new Date(text).toLocaleString() : ''
+}
 
 loadMore();
 </script>
