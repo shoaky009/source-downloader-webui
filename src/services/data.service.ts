@@ -9,11 +9,11 @@ const instance = axios.create({
     baseURL: API_BASE_URL(),
 });
 
-// declare module 'axios' {
-//     export interface AxiosRequestConfig {
-//         alertMessage?: string;
-//     }
-// }
+declare module 'axios' {
+    export interface AxiosRequestConfig {
+        alertMessage?: string;
+    }
+}
 
 instance.interceptors.response.use(response => {
     if (response.config.alertMessage) {
@@ -86,7 +86,14 @@ export interface Processor {
     category: string,
     tags: string[],
     enabled: boolean,
-    lastTriggerTime: string,
+    runtime: ProcessorRuntime,
+}
+
+export interface ProcessorRuntime {
+    createdAt: string,
+    lastStartProcessTime: string,
+    lastEndProcessTime: string,
+    lastProcessFailedMessage: string,
 }
 
 export interface Component {
