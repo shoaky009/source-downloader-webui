@@ -17,7 +17,7 @@ import {
   Plus,
   Minus,
 } from '@element-plus/icons-vue'
-import {watch, ref, defineModel} from 'vue';
+import {watch, ref} from 'vue';
 import VueForm, {fieldProps, vueUtils} from '@lljj/vue3-form-element';
 
 const model = defineModel()
