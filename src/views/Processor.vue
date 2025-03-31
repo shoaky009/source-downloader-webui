@@ -12,7 +12,7 @@
       :data="filteredData"
       style="width: 100%"
       v-loading="loading"
-
+      :row-class-name="rowClassName"
   >
     <el-table-column label="名称" width="180" align="center">
       <template #default="scope">
@@ -91,6 +91,11 @@
         </el-button>
       </template>
     </el-table-column>
+    <el-table-column label="消息" width="100%" align="center">
+      <template #default="scope">
+        <span>{{ scope.row.errorMessage }}</span>
+      </template>
+    </el-table-column>
   </el-table>
 
   <ShowSourceState :processor-name="stateProcessor" v-model="stateJsonViewer"/>
@@ -106,7 +111,7 @@
 import {ElButton, ElSwitch, ElTag} from "element-plus";
 import {Plus,} from "@element-plus/icons-vue";
 import {computed, ref} from "vue";
-import {Processor, processorService} from "~/services/data.service";
+import {Component, Processor, processorService} from "~/services/data.service";
 
 import "vue3-json-viewer/dist/index.css";
 import ShowSourceState from "~/components/ShowSourceState.vue";
@@ -129,7 +134,7 @@ Pointer: 数据源的处理进度<br/>
 
 const loading = ref(false);
 const processors = ref<Processor[]>([]);
-const loadMore = () => {
+const fetchProcessors = async () => {
   loading.value = true
   processorService.query().then(response => {
     processors.value = response;
@@ -164,8 +169,9 @@ const handleEdit = (index: number, processor: Processor) => {
   console.log(index, processor);
 };
 //=========
-const handleReload = (processor: Processor) => {
-  processorService.reload(processor.name);
+const handleReload = async (processor: Processor) => {
+  await processorService.reload(processor.name);
+  await fetchProcessors();
 };
 
 //=========
@@ -204,5 +210,17 @@ const toLocalDate = (text:string) => {
   return text ? new Date(text).toLocaleString() : ''
 }
 
-loadMore();
+const rowClassName = ({row}: { row: Component }) => {
+  if (row.errorMessage != null) {
+    return 'instance-error'
+  }
+}
+
+fetchProcessors();
 </script>
+
+<style>
+.instance-error {
+  color: red;
+}
+</style>
