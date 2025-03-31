@@ -87,6 +87,7 @@ export interface Processor {
     tags: string[],
     enabled: boolean,
     runtime: ProcessorRuntime,
+    errorMessage: string
 }
 
 export interface ProcessorRuntime {
@@ -102,7 +103,8 @@ export interface Component {
     typeName: string,
     props: object,
     stateDetail: any,
-    primary: boolean
+    primary: boolean,
+    errorMessage: string
 }
 
 class ProcessingContentService {

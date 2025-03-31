@@ -21,9 +21,10 @@
         </el-row>
       </template>
     </el-table-column>
-    <el-table-column label="类型" width="180" align="center" prop="type"/>
-    <el-table-column label="类型名称" width="180" align="center" prop="typeName"/>
-    <el-table-column label="名称" width="180" align="center" prop="name"/>
+    <el-table-column label="类型" align="center" prop="type"/>
+    <el-table-column label="类型名称" align="center" prop="typeName"/>
+    <el-table-column label="名称" align="center" prop="name"/>
+    <el-table-column label="消息" align="center" prop="errorMessage"/>
     <el-table-column label="引用" align="center">
       <template #default="scope">
         <el-tag v-for="item in scope.row.refs">
@@ -64,12 +65,15 @@ import ComponentForm from "~/components/ComponentForm.vue";
 const loading = ref(false)
 const components = ref<Component[]>([])
 const rowClassName = ({row}: { row: Component }) => {
+  if (row.errorMessage != null) {
+    return 'instance-error'
+  }
   if (row.stateDetail == null) {
     return 'row-expand-cover'
   }
 }
 
-const loadMore = async () => {
+const fetchComponents = async () => {
   loading.value = true
   try {
     components.value = await componentService.query({})
@@ -78,7 +82,7 @@ const loadMore = async () => {
   }
 }
 
-onMounted(loadMore)
+onMounted(fetchComponents)
 
 const handleEdit = (index: number, component: Component) => {
   console.log(index, component)
@@ -90,6 +94,7 @@ const handleDelete = (index: number, component: Component) => {
 
 const handleReload = async (component: Component) => {
   await componentService.reload(component)
+  await fetchComponents()
 }
 
 // state stream
@@ -131,5 +136,8 @@ const handleCreateForm = () => {
 <style>
 .row-expand-cover .ep-table__expand-icon {
   visibility: hidden;
+}
+.instance-error {
+  color: red;
 }
 </style>
