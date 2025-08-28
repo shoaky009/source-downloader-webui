@@ -41,11 +41,35 @@
             @change="handleDateChange"
         />
       </el-col>
+      <el-col :span="8">
+        <el-popconfirm
+            title="确定要重新处理选中的条目吗?"
+            @confirm="handleBatchReprocess"
+        >
+          <template #reference>
+            <el-button size="small" type="warning">
+              批量重新处理({{ selectedRows.length }})
+            </el-button>
+          </template>
+        </el-popconfirm>
+        <el-popconfirm
+            title="确定要删除选中的条目吗?"
+            @confirm="handleBatchDelete"
+        >
+          <template #reference>
+            <el-button size="small" type="danger">
+              批量删除({{ selectedRows.length }})
+            </el-button>
+          </template>
+        </el-popconfirm>
+      </el-col>
     </el-row>
   </el-affix>
 
   <el-table
-      :data="itemContents" row-key="id"
+      :data="itemContents" 
+      row-key="id"
+      @selection-change="handleSelectionChange"
       v-infinite-scroll="loadMore"
       infinite-scroll-immediate="false"
       infinite-scroll-delay="1000"
@@ -54,6 +78,7 @@
       style="width: 100%"
       ref="tableRef"
   >
+    <el-table-column type="selection" width="55" />
     <el-table-column prop="id" width="200px">
       <template #default="scope">
         <el-tag size="large" type="info" class="column-layout">ID:{{ scope.row.id }}</el-tag>
@@ -136,6 +161,7 @@ import {
 } from "~/services/data.service";
 import {debounce} from "lodash";
 import ItemContentDetail from "~/components/ItemContentDetail.vue";
+import {ElMessage, ElMessageBox} from "element-plus";
 
 // main list
 const itemContents = ref<ProcessingContent[]>([]);
@@ -253,6 +279,38 @@ const handleDelete = (row: ProcessingContent) => {
   processingContentService.delete(row.id).then(() => {
     loadMore(true)
   })
+}
+
+const selectedRows = ref<ProcessingContent[]>([]);
+const handleSelectionChange = (selection: ProcessingContent[]) => {
+  selectedRows.value = selection;
+}
+
+const handleBatchReprocess = async () => {
+  const confirmMessage = `确定要重新处理${selectedRows.value.length}个条目吗？`;
+  ElMessageBox.confirm(confirmMessage, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(async () => {
+    try {
+      await Promise.all(selectedRows.value.map(row => processingContentService.reprocess(row.id)));
+      ElMessage.success('批量重新处理已完成');
+      loadMore(true);
+    } catch (error) {
+      ElMessage.error('操作失败');
+    }
+  });
+}
+
+const handleBatchDelete = async () => {
+  try {
+    await Promise.all(selectedRows.value.map(row => processingContentService.delete(row.id)));
+    ElMessage.success('批量删除已完成');
+    loadMore(true);
+  } catch (error) {
+    ElMessage.error('操作失败');
+  }
 }
 </script>
 
