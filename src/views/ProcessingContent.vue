@@ -66,18 +66,18 @@
     </el-row>
   </el-affix>
 
-  <el-table
-      :data="itemContents" 
-      row-key="id"
-      @selection-change="handleSelectionChange"
-      v-infinite-scroll="loadMore"
-      infinite-scroll-immediate="false"
-      infinite-scroll-delay="1000"
-      infinite-scroll-distance="5"
-      v-loading.lock="loading"
-      style="width: 100%"
-      ref="tableRef"
+  <el-scrollbar ref="scrollbarRef"
+                :distance="1"
+                @end-reached="loadMore"
   >
+    <el-table
+        :data="itemContents"
+        row-key="id"
+        @selection-change="handleSelectionChange"
+        v-loading.lock="loading"
+        style="width: 100%"
+        ref="tableRef"
+    >
     <el-table-column type="selection" width="55" />
     <el-table-column prop="id" width="200px">
       <template #default="scope">
@@ -136,7 +136,8 @@
         </el-descriptions>
       </template>
     </el-table-column>
-  </el-table>
+    </el-table>
+  </el-scrollbar>
 
   <el-dialog v-model="showFileContentDialog">
     <el-table :data="fileContents" row-key="fileDownloadPath">
@@ -161,18 +162,40 @@ import {
 } from "~/services/data.service";
 import {debounce} from "lodash";
 import ItemContentDetail from "~/components/ItemContentDetail.vue";
-import {ElMessage, ElMessageBox} from "element-plus";
+import {ElMessage, ElMessageBox, ScrollbarDirection} from "element-plus";
 
 // main list
 const itemContents = ref<ProcessingContent[]>([]);
 let maxId = 0;
 const loading = ref(false);
+const scrollbarRef = ref();
 const tableRef = ref();
-const loadMore = (clear: boolean = false) => {
+
+const loadMore = (direction?: ScrollbarDirection, clear: boolean = false) => {
   if (clear) {
-    maxId = 0
+    // 如果是点击搜索、切换 Tab 等触发的“清空刷新”，立即执行，不防抖
+    debouncedLoadMore.cancel();
+    fetchData(true);
+  } else {
+    // 如果是滚动到底部触发，进入防抖计时
+    debouncedLoadMore(direction);
   }
-  loading.value = true
+};
+
+const debouncedLoadMore = debounce((direction: any) => {
+  if (direction === "top") return;
+  // 滚动触发的不需要 clear
+  fetchData(false);
+}, 1000);
+
+const fetchData = (clear: boolean = false) => {
+  if (loading.value) return;
+
+  if (clear) {
+    maxId = 0;
+  }
+
+  loading.value = true;
   processingContentService.query({
     'maxId': maxId.toString(),
     'processorName': selectedProcessors.value.join(','),
@@ -184,23 +207,26 @@ const loadMore = (clear: boolean = false) => {
   }).then(response => {
     const contents = response.contents;
     if (clear) {
-      itemContents.value = contents
-      //不知道怎么回到顶部
-      // tableRef.value.setScrollTop(-999)
+      itemContents.value = contents;
+      // 刷新后回到顶部
+      if (scrollbarRef.value) {
+        scrollbarRef.value.setScrollTop(0);
+      }
     } else {
-      itemContents.value = itemContents.value.concat(contents);
+      itemContents.value = [...itemContents.value, ...contents];
     }
+
     const nextMaxId = response.nextMaxId;
     if (nextMaxId) {
       maxId = nextMaxId;
     }
   }).finally(() => {
     loading.value = false;
-  })
+  });
 };
 
 onMounted(() => {
-  loadMore(true);
+  loadMore(undefined, true);
 });
 
 // file content dialog
@@ -219,13 +245,13 @@ const handleSelectedProcessors = (selected: string[]) => {
   if (selected.length === 0) {
     status.value = []
   }
-  loadMore(true)
+  loadMore(undefined, true)
 }
 
 const status = ref<string[]>([]);
 const handleStatusSelected = () => {
   if (selectedProcessors.value.length > 0) {
-    loadMore(true)
+    loadMore(undefined, true)
   }
 }
 
@@ -234,19 +260,19 @@ const handleItemHashBlur = () => {
   if (itemHash.value) {
     maxId = 0
   }
-  loadMore(true)
+  loadMore(undefined, true)
 }
 
 const itemTitle = ref<string>();
 const handleItemTitleChange = debounce((text) => {
   itemTitle.value = text
-  loadMore(true)
+  loadMore(undefined, true)
 }, 200)
 
 
 const createTimeRange = ref<[Date, Date]>();
 const handleDateChange = (_: [Date, Date]) => {
-  loadMore(true)
+  loadMore(undefined, true)
 }
 const shortcuts = [
   {
@@ -272,12 +298,12 @@ const shortcuts = [
 // operation
 const handleReprocess = (row: ProcessingContent) => {
   processingContentService.reprocess(row.id).then(() => {
-    loadMore(true)
+    loadMore(undefined, true)
   })
 }
 const handleDelete = (row: ProcessingContent) => {
   processingContentService.delete(row.id).then(() => {
-    loadMore(true)
+    loadMore(undefined, true)
   })
 }
 
@@ -296,7 +322,7 @@ const handleBatchReprocess = async () => {
     try {
       await Promise.all(selectedRows.value.map(row => processingContentService.reprocess(row.id)));
       ElMessage.success('批量重新处理已完成');
-      loadMore(true);
+      loadMore(undefined, true);
     } catch (error) {
       ElMessage.error('操作失败');
     }
@@ -307,7 +333,7 @@ const handleBatchDelete = async () => {
   try {
     await Promise.all(selectedRows.value.map(row => processingContentService.delete(row.id)));
     ElMessage.success('批量删除已完成');
-    loadMore(true);
+    loadMore(undefined, true);
   } catch (error) {
     ElMessage.error('操作失败');
   }
