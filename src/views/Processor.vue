@@ -113,7 +113,6 @@ import {Plus,} from "@element-plus/icons-vue";
 import {computed, ref} from "vue";
 import {Component, Processor, processorService} from "~/services/data.service";
 
-import "vue3-json-viewer/dist/index.css";
 import ShowSourceState from "~/components/ShowSourceState.vue";
 import ProcessorDryRun from "~/components/ProcessorDryRun.vue";
 import ProcessorForm from "~/components/ProcessorForm.vue";

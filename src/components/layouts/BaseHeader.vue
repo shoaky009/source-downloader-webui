@@ -2,7 +2,7 @@
   <el-menu class="el-menu-demo" mode="horizontal">
     <el-menu-item index="1">SourceDownloader</el-menu-item>
     <el-tooltip content="黑夜模式">
-      <el-menu-item h="full" @click="toggleDark()">
+      <el-menu-item index="1" h="full" @click="toggleDark()">
         <button class="border-none w-full bg-transparent cursor-pointer"
                 style="height: var(--ep-menu-item-height)">
           <i inline-flex i="dark:ep-moon ep-sunny"/>
@@ -10,7 +10,7 @@
       </el-menu-item>
     </el-tooltip>
     <el-tooltip content="重载应用">
-      <el-menu-item @click="handleReload()">
+      <el-menu-item index="1" @click="handleReload()">
         <el-icon>
           <refresh/>
         </el-icon>

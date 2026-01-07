@@ -153,7 +153,7 @@ class ProcessorService {
     }
 
     async reload(name: string) {
-        return instance.get(`/api/processor/${name}/reload`, {alertMessage: '重载成功'});
+        return instance.post(`/api/processor/${name}/reload`, {alertMessage: '重载成功'});
     }
 
     async trigger(name: string) {
@@ -217,7 +217,7 @@ class ComponentService {
     }
 
     async reload(component: Component) {
-        return instance.get(`/api/component/${component.type}/${component.typeName}/${component.name}/reload`, {alertMessage: '重载成功'});
+        return instance.post(`/api/component/${component.type}/${component.typeName}/${component.name}/reload`, {alertMessage: '重载成功'});
     }
 
     async types(query: Record<string, string>) {
@@ -239,7 +239,7 @@ class ComponentService {
 class ApplicationService {
 
     async reload() {
-        return instance.get(`/api/application/reload`, {alertMessage: '重载成功'});
+        return instance.post(`/api/application/reload`, {alertMessage: '重载成功'});
     }
 }
 
