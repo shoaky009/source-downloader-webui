@@ -35,7 +35,6 @@
 import {isDark} from "~/composables";
 import {ref} from "vue";
 import JsonEditor, {JSONContent, TextContent} from 'vue3-ts-jsoneditor';
-import "vue3-json-viewer/dist/index.css";
 import {processorService} from "~/services/data.service";
 import {ElMessage} from "element-plus";
 

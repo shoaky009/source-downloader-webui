@@ -6,7 +6,7 @@
       </el-tooltip>
     </el-descriptions-item>
     <el-descriptions-item label="链接:">
-      <el-link type="primary" :href="sourceItem?.link" target="_blank" :underline="false">
+      <el-link type="primary" :href="sourceItem?.link" target="_blank" underline="never">
         {{ sourceItem?.link }}
       </el-link>
     </el-descriptions-item>
