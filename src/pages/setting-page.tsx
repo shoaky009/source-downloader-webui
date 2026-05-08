@@ -1,9 +1,9 @@
 import { Package, Server } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-import { useDocumentTitle } from '~/hooks/use-document-title'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
-import { actuatorService } from '~/services/data.service'
+import { useDocumentTitle } from '@/hooks/use-document-title'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { actuatorService } from '@/services/data.service'
 
 interface BuildInfo {
   version?: string

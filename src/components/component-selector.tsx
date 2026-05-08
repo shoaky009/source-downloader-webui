@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
-import { MultiSelect, SingleSelect } from '~/components/shared/multi-select'
-import { componentService } from '~/services/data.service'
+import { MultiSelect, SingleSelect } from '@/components/shared/multi-select'
+import { componentService } from '@/services/data.service'
 
 export function ComponentSelector({
   type,

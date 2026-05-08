@@ -2,12 +2,12 @@ import Form from '@rjsf/shadcn'
 import validator from '@rjsf/validator-ajv8'
 import { useMemo, useState } from 'react'
 
-import { KeyValueField } from '~/components/jsonschema/key-value-field'
-import { FormRow } from '~/components/shared/form-row'
-import { Button } from '~/components/ui/button'
-import { Input } from '~/components/ui/input'
-import { SingleSelect } from '~/components/shared/multi-select'
-import { componentService } from '~/services/data.service'
+import { KeyValueField } from '@/components/jsonschema/key-value-field'
+import { FormRow } from '@/components/shared/form-row'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { SingleSelect } from '@/components/shared/multi-select'
+import { componentService } from '@/services/data.service'
 
 interface ComponentType {
   type: string

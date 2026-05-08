@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import { MultiSelect } from '~/components/shared/multi-select'
-import { processorService } from '~/services/data.service'
+import { MultiSelect } from '@/components/shared/multi-select'
+import { processorService } from '@/services/data.service'
 
 export function ProcessorSelector({ value, onChange }: { value: string[]; onChange: (next: string[]) => void }) {
   const [options, setOptions] = useState<{ label: string; value: string }[]>([])

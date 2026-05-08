@@ -1,7 +1,7 @@
 import type { FieldProps } from '@rjsf/utils'
 
-import { Button } from '~/components/ui/button'
-import { Input } from '~/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 type Pair = { key: string; value: string }
 

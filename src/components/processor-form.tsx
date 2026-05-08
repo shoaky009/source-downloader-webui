@@ -1,13 +1,13 @@
 import { useState } from 'react'
 
-import { ComponentSelector } from '~/components/component-selector'
-import { DynamicTag } from '~/components/dynamic-tag'
-import { FormRow } from '~/components/shared/form-row'
-import { Button } from '~/components/ui/button'
-import { Input } from '~/components/ui/input'
-import { Switch } from '~/components/ui/switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
-import { SingleSelect } from '~/components/shared/multi-select'
+import { ComponentSelector } from '@/components/component-selector'
+import { DynamicTag } from '@/components/dynamic-tag'
+import { FormRow } from '@/components/shared/form-row'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SingleSelect } from '@/components/shared/multi-select'
 
 interface ProcessorConfig {
   name?: string

@@ -14,13 +14,13 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
-import { useDocumentTitle } from '~/hooks/use-document-title'
-import { FileContentDetail } from '~/components/file-content-detail'
-import { ItemContentDetail } from '~/components/item-content-detail'
-import { ProcessorSelector } from '~/components/processor-selector'
-import { MultiSelect } from '~/components/shared/multi-select'
-import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
+import { useDocumentTitle } from '@/hooks/use-document-title'
+import { FileContentDetail } from '@/components/file-content-detail'
+import { ItemContentDetail } from '@/components/item-content-detail'
+import { ProcessorSelector } from '@/components/processor-selector'
+import { MultiSelect } from '@/components/shared/multi-select'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,10 +30,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '~/components/ui/alert-dialog'
-import { Card, CardContent } from '~/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
-import { Input } from '~/components/ui/input'
+} from '@/components/ui/alert-dialog'
+import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import {
   type FileContent,
   fileStatusGrouping,
@@ -41,7 +41,7 @@ import {
   type ProcessingContent,
   processingContentService,
   processingContentStatuses,
-} from '~/services/data.service'
+} from '@/services/data.service'
 
 function statusVariant(type: string): 'default' | 'secondary' | 'destructive' | 'outline' {
   if (type === 'danger') return 'destructive'

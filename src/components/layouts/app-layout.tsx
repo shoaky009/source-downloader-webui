@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
-import { AppHeader } from '~/components/layouts/base-header'
-import { AppSidebar } from '~/components/layouts/base-side'
+import { AppHeader } from '@/components/layouts/base-header'
+import { AppSidebar } from '@/components/layouts/base-side'
 
 export function AppLayout({ children }: { children: ReactNode }) {
   return (

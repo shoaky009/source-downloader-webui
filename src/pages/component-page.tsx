@@ -1,15 +1,15 @@
 import { AlertCircle, ChevronDown, ChevronRight, Layers, Plus, RefreshCw, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-import { useDocumentTitle } from '~/hooks/use-document-title'
-import { ComponentForm } from '~/components/component-form'
-import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
-import { Card, CardContent } from '~/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '~/components/ui/dialog'
-import { Input } from '~/components/ui/input'
-import type { Component } from '~/services/data.service'
-import { componentService } from '~/services/data.service'
+import { useDocumentTitle } from '@/hooks/use-document-title'
+import { ComponentForm } from '@/components/component-form'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import type { Component } from '@/services/data.service'
+import { componentService } from '@/services/data.service'
 
 function StateDetailView({ data }: { data: unknown }) {
   if (data === null || data === undefined) {

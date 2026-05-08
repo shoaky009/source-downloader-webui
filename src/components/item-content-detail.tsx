@@ -1,6 +1,6 @@
-import { Badge } from '~/components/ui/badge'
-import { Descriptions, DescriptionsItem } from '~/components/shared/descriptions'
-import type { ItemContent } from '~/services/data.service'
+import { Badge } from '@/components/ui/badge'
+import { Descriptions, DescriptionsItem } from '@/components/shared/descriptions'
+import type { ItemContent } from '@/services/data.service'
 
 export function ItemContentDetail({ content }: { content?: ItemContent | null }) {
   const sourceItem = content?.sourceItem

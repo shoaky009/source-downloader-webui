@@ -1,7 +1,7 @@
-import { Badge } from '~/components/ui/badge'
-import { Descriptions, DescriptionsItem } from '~/components/shared/descriptions'
-import type { FileContent } from '~/services/data.service'
-import { fileStatusOf } from '~/services/data.service'
+import { Badge } from '@/components/ui/badge'
+import { Descriptions, DescriptionsItem } from '@/components/shared/descriptions'
+import type { FileContent } from '@/services/data.service'
+import { fileStatusOf } from '@/services/data.service'
 
 function statusVariant(type: string): 'default' | 'secondary' | 'destructive' | 'outline' {
   if (type === 'danger') return 'destructive'

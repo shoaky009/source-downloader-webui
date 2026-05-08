@@ -1,7 +1,7 @@
 import { Blocks, FileText, Settings, Workflow } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
-import { cn } from '~/lib/utils'
+import { cn } from '@/lib/utils'
 
 const navItems = [
   { to: '/processor', label: '处理器', icon: Workflow },

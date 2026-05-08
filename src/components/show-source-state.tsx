@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-import { JsonEditor } from '~/components/shared/json-editor'
-import { Button } from '~/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog'
-import { processorService } from '~/services/data.service'
+import { JsonEditor } from '@/components/shared/json-editor'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { processorService } from '@/services/data.service'
 
 export function ShowSourceState({ processorName, open, onOpenChange }: { processorName?: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   const [data, setData] = useState('')

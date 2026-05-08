@@ -1,6 +1,6 @@
 import Editor from '@monaco-editor/react'
 
-import { useDarkMode } from '~/hooks'
+import { useDarkMode } from '@/hooks'
 
 export function JsonEditor({
   value,

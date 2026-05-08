@@ -1,20 +1,20 @@
 import { useState } from 'react'
 
-import { FileContentDetail } from '~/components/file-content-detail'
-import { ItemContentDetail } from '~/components/item-content-detail'
-import { JsonEditor } from '~/components/shared/json-editor'
-import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '~/components/ui/dialog'
-import { Switch } from '~/components/ui/switch'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table'
+import { FileContentDetail } from '@/components/file-content-detail'
+import { ItemContentDetail } from '@/components/item-content-detail'
+import { JsonEditor } from '@/components/shared/json-editor'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
   type FileContent,
   fileStatusGrouping,
   itemStatusOf,
   type ProcessingContent,
   processorService,
-} from '~/services/data.service'
+} from '@/services/data.service'
 
 function statusVariant(type: string): 'default' | 'secondary' | 'destructive' | 'outline' {
   if (type === 'danger') return 'destructive'

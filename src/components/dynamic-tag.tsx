@@ -1,9 +1,9 @@
 import { X } from 'lucide-react'
 import { useRef, useState } from 'react'
 
-import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
-import { Input } from '~/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 export function DynamicTag({ value = [], onChange }: { value?: string[]; onChange: (next: string[]) => void }) {
   const [inputVisible, setInputVisible] = useState(false)
