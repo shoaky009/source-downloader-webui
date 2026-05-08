@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 
+import { useDocumentTitle } from '~/hooks/use-document-title'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Descriptions, DescriptionsItem } from '~/components/shared/descriptions'
 import { actuatorService } from '~/services/data.service'
 
 export function SettingPage() {
+  useDocumentTitle('设置')
   const [backendAppInfo, setBackendAppInfo] = useState<unknown>()
 
   useEffect(() => {
