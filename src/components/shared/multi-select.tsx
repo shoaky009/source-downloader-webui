@@ -6,12 +6,15 @@ import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
 import { Input } from '~/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { cn } from '~/lib/utils'
 
 export interface SelectOption {
   label: string
   value: string
 }
+
+const CLEAR_SELECT_VALUE = '__clear__'
 
 export function MultiSelect({
   options,
@@ -110,25 +113,22 @@ export function SingleSelect({
   const selected = options.find((option) => option.value === value)
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full justify-between" disabled={disabled}>
-          <span className={cn('truncate', !selected && 'text-muted-foreground')}>{selected?.label ?? placeholder}</span>
-          <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[320px] p-2" align="start">
-        <div className="max-h-64 space-y-1 overflow-auto">
-          <Button variant="ghost" className="w-full justify-start" onClick={() => onChange(undefined)}>
-            清空
-          </Button>
-          {options.map((option) => (
-            <Button key={option.value} variant="ghost" className="w-full justify-start" onClick={() => onChange(option.value)}>
-              {option.label}
-            </Button>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
+    <Select
+      value={value}
+      onValueChange={(next) => onChange(next === CLEAR_SELECT_VALUE ? undefined : next)}
+      disabled={disabled}
+    >
+      <SelectTrigger className={cn('w-full', !selected && 'text-muted-foreground')}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={CLEAR_SELECT_VALUE}>清空</SelectItem>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }

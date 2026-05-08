@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { MultiSelect } from '~/components/shared/multi-select'
 import { processorService } from '~/services/data.service'
@@ -14,9 +14,11 @@ export function ProcessorSelector({ value, onChange }: { value: string[]; onChan
     setOptions(processors.map((item) => ({ label: item.name, value: item.name })))
   }
 
+  useEffect(() => {
+    void fetchProcessors()
+  }, [])
+
   return (
-    <div onClick={fetchProcessors}>
-      <MultiSelect options={options} value={value} onChange={onChange} placeholder="筛选处理器" />
-    </div>
+    <MultiSelect options={options} value={value} onChange={onChange} placeholder="筛选处理器" />
   )
 }

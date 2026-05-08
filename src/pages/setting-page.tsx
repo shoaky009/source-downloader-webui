@@ -1,4 +1,4 @@
-import { Info, Package, Server } from 'lucide-react'
+import { Package, Server } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { useDocumentTitle } from '~/hooks/use-document-title'
@@ -10,15 +10,6 @@ interface BuildInfo {
   buildTime?: string
   commitHash?: string
   [key: string]: unknown
-}
-
-function InfoItem({ label, value }: { label: string; value: string | undefined }) {
-  return (
-    <div className="flex items-center justify-between border-b py-3 last:border-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="font-mono text-sm">{value || '-'}</span>
-    </div>
-  )
 }
 
 function JsonDisplay({ data }: { data: unknown }) {
@@ -92,8 +83,6 @@ export function SettingPage() {
 
   return (
     <div className="space-y-6">
-      {/* 页面标题区域已移除，通过左侧路由表明 */}
-
       <div className="grid gap-6 lg:grid-cols-2">
         {/* UI 构建信息 */}
         <Card>
@@ -141,19 +130,6 @@ export function SettingPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* 提示信息 */}
-      <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900/50 dark:bg-blue-950/20">
-        <CardContent className="flex items-start gap-3 p-4">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
-          <div className="text-sm text-blue-800 dark:text-blue-200">
-            <p className="font-medium">关于此页面</p>
-            <p className="mt-1 text-blue-700 dark:text-blue-300">
-              此页面展示应用的构建信息和运行状态。如需更多配置选项，请参考相关文档或联系管理员。
-            </p>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
