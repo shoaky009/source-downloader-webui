@@ -139,7 +139,7 @@ export function ProcessorPage() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-5">
+      <div className="sticky -top-4 z-10 -mx-4 bg-background px-4 pb-5 pt-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative w-full sm:w-72">
@@ -157,7 +157,9 @@ export function ProcessorPage() {
             </Button>
           </div>
         </div>
+      </div>
 
+      <div className="space-y-5">
         <div className="grid gap-5 sm:grid-cols-3">
           {summary.map((item) => (
             <Card key={item.label}>
