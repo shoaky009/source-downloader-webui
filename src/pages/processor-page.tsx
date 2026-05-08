@@ -217,9 +217,9 @@ export function ProcessorPage() {
         </Card>
       )}
 
-      {/* 处理器列表 */}
+      {/* 处理器列表 - 响应式多列 */}
       {!isInitialLoading && filteredData.length > 0 && (
-        <div className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
           {filteredData.map((processor) => {
             const hasError = Boolean(processor.errorMessage)
             const lastRun = toRelativeDate(processor.runtime?.lastEndProcessTime)
