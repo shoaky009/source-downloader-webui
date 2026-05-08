@@ -6,26 +6,28 @@
 
 # Verification
 
-- Available scripts are only `npm run dev`, `npm run build`, `npm run generate`, `npm run preview`, and `npm run typecheck`.
+- Available scripts are `npm run dev`, `npm run build`, `npm run generate`, `npm run preview`, and `npm run typecheck`.
+- `npm run generate` is currently just an alias to `vite build`; there is no SSG flow anymore.
 - There is no repo lint or test config, and no CI workflow checked in.
 - Default focused verification is `npm run typecheck`; use `npm run build` for a full production bundle check.
 
 # App Shape
 
-- This is a single-package Vue 3 + TypeScript + Vite app, not a monorepo.
-- App bootstrap is `src/main.ts`: it mounts `App.vue`, registers `ElementPlus`, `vue-router`, `el-table-infinite-scroll`, and the global `MapForm` component.
-- Route wiring is flat in `src/router.ts`: `/processor`, `/component`, `/processing-content`, and `/setting`.
-- Most backend integration is centralized in `src/services/data.service.ts`; prefer updating service methods there instead of scattering `axios`/`fetch` calls across views.
+- This is a single-package React + TypeScript + Vite app, not a monorepo.
+- App bootstrap is `src/main.tsx`; it mounts `App.tsx` under `BrowserRouter` and `next-themes` `ThemeProvider`.
+- Route wiring is flat in `src/App.tsx`: `/processor`, `/component`, `/processing-content`, and `/setting`.
+- Most backend integration is centralized in `src/services/data.service.ts`; prefer updating service methods there instead of scattering `axios`/`fetch` calls across pages.
 
 # Runtime Quirks
 
 - Dev API base URL comes from `VITE_API_BASE_URL` and falls back to `http://localhost:8080`; in non-dev builds the frontend calls the backend on `location.origin`.
-- `src/views/Component.vue` uses SSE via `@vueuse/core` `useEventSource`; `src/views/ProcessingContent.vue` uses debounced infinite scrolling.
-- `src/views/Setting.vue` reads `__APP_INFO__`, which is injected by `vite-plugin-build-info` in `vite.config.ts`.
+- Component state updates still use SSE against `/api/component/state-stream`; processing-content still uses debounced incremental loading.
+- `src/pages/setting-page.tsx` reads `__APP_INFO__`, which is injected by `vite-plugin-build-info` in `vite.config.ts`.
+- JSON editing is via Monaco (`@monaco-editor/react`); dynamic component property forms use `@rjsf/core` with the custom map field in `src/components/jsonschema/key-value-field.tsx`.
 
 # Styling And Imports
 
 - Use the `~/` alias for `src/*`; it is defined in both `tsconfig.json` and `vite.config.ts`.
-- SCSS files automatically receive `@use "~/styles/element/index.scss" as *;` from Vite config, so Element Plus theme variables are globally available in SCSS.
-- UnoCSS is enabled directly inside `vite.config.ts`; `src/main.ts` imports `uno.css`.
-- Component auto-registration is handled by `unplugin-vue-components`; `src/components.d.ts` is generated, so do not hand-edit it.
+- Tailwind is the styling base; shadcn-style primitives live under `src/components/ui/`.
+- Dark mode is class-based through `next-themes`; shared theme state lives in `src/hooks/use-dark-mode.ts`.
+- Vite manual chunking already splits `react`, `monaco`, and `@rjsf/*`; keep heavy editor/form dependencies out of the main chunk when possible.

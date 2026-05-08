@@ -1,9 +1,20 @@
-# Vue 3 + TypeScript + Vite
+# SourceDownloader Web UI
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+React + TypeScript + Vite frontend for SourceDownloader.
 
-## Recommended Setup
+## Setup
 
-- [VS Code](https://code.visualstudio.com/) + [Vue - Official](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (previously Volar) and disable Vetur
+- Node `20.17.0` from `.tool-versions`
+- `npm install`
 
-- Use [vue-tsc](https://github.com/vuejs/language-tools/tree/master/packages/tsc) for performing the same type checking from the command line, or for generating d.ts files for SFCs.
+## Scripts
+
+- `npm run dev`
+- `npm run typecheck`
+- `npm run build`
+- `npm run preview`
+
+## Notes
+
+- Dev API base URL comes from `VITE_API_BASE_URL` and falls back to `http://localhost:8080`.
+- Build info on `/setting` comes from `vite-plugin-build-info` via `__APP_INFO__`.
