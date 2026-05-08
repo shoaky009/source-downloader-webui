@@ -16,14 +16,13 @@ export function KeyValueField(props: FieldProps) {
   const pairs = toPairs(props.formData)
 
   const updatePairs = (next: Pair[]) => {
-    props.onChange(
-      next.reduce<Record<string, string>>((acc, pair) => {
+    const nextValue = next.reduce<Record<string, string>>((acc, pair) => {
         if (pair.key) {
           acc[pair.key] = pair.value
         }
         return acc
-      }, {}),
-    )
+      }, {})
+    props.onChange(nextValue, [], props.schema, props.idSchema)
   }
 
   return (

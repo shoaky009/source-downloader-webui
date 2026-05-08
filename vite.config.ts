@@ -15,10 +15,17 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom', 'react-router-dom'],
-          monaco: ['@monaco-editor/react'],
-          forms: ['@rjsf/core', '@rjsf/utils', '@rjsf/validator-ajv8'],
+        manualChunks(id) {
+          if (id.includes('node_modules/@monaco-editor/react') || id.includes('node_modules/monaco-editor')) {
+            return 'monaco'
+          }
+          if (id.includes('node_modules/@rjsf/')) {
+            return 'forms'
+          }
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/react-router')) {
+            return 'react'
+          }
+          return undefined
         },
       },
     },
