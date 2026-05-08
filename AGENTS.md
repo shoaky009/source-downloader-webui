@@ -7,10 +7,10 @@
 # Verification
 
 - Available scripts are `bun run dev`, `bun run build`, `bun run generate`, `bun run preview`, and `bun run typecheck`.
-- `bun run build`/`generate` call `vite build`, but on this machine direct Node execution can fail because Vite 8 needs Node `20.19+`; use `bun --bun vite build` if that happens.
+- Vite-facing scripts already invoke `bun --bun vite ...`, which avoids the local Node `20.17.0` incompatibility with Vite 8.
 - `bun run generate` is currently just an alias to `vite build`; there is no SSG flow anymore.
 - There is no repo lint or test config, and no CI workflow checked in.
-- Default focused verification is `bun run typecheck`; use `bun --bun vite build` for a full production bundle check.
+- Default focused verification is `bun run typecheck`; use `bun run build` for a full production bundle check.
 
 # App Shape
 
