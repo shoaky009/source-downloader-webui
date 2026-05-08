@@ -2,6 +2,7 @@ import debounce from 'lodash/debounce'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
+import { useDocumentTitle } from '~/hooks/use-document-title'
 import { FileContentDetail } from '~/components/file-content-detail'
 import { ItemContentDetail } from '~/components/item-content-detail'
 import { ProcessorSelector } from '~/components/processor-selector'
@@ -43,6 +44,7 @@ function toRangeValue(value: [string, string] | undefined) {
 }
 
 export function ProcessingContentPage() {
+  useDocumentTitle('记录')
   const [itemContents, setItemContents] = useState<ProcessingContent[]>([])
   const [maxId, setMaxId] = useState(0)
   const [loading, setLoading] = useState(false)

@@ -1,6 +1,7 @@
 import { AlertCircle, LoaderCircle, MoreHorizontal, Play, Plus, Search, Zap } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
+import { useDocumentTitle } from '~/hooks/use-document-title'
 import { ProcessorForm } from '~/components/processor-form'
 import { ProcessorDryRun } from '~/components/processor-dry-run'
 import { ShowSourceState } from '~/components/show-source-state'
@@ -66,11 +67,8 @@ function toDateWithRelative(text?: string) {
 }
 
 export function ProcessorPage() {
+  useDocumentTitle('处理器')
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    document.title = '处理器 - SourceDownloader'
-  }, [])
   const [processors, setProcessors] = useState<Processor[]>([])
   const [processNameFilter, setProcessNameFilter] = useState('')
   const [creationFormOpen, setCreationFormOpen] = useState(false)

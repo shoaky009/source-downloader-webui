@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import { useDocumentTitle } from '~/hooks/use-document-title'
 import { ComponentForm } from '~/components/component-form'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
@@ -11,6 +12,7 @@ import type { Component } from '~/services/data.service'
 import { componentService } from '~/services/data.service'
 
 export function ComponentPage() {
+  useDocumentTitle('组件')
   const [loading, setLoading] = useState(false)
   const [components, setComponents] = useState<Component[]>([])
   const [creationFormOpen, setCreationFormOpen] = useState(false)
