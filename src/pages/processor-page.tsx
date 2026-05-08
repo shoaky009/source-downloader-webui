@@ -222,7 +222,12 @@ export function ProcessorPage() {
         <div className="grid gap-3 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
           {filteredData.map((processor) => {
             const hasError = Boolean(processor.errorMessage)
-            const lastRun = toRelativeDate(processor.runtime?.lastEndProcessTime)
+            const runtime = processor.runtime
+            const times = [
+              { label: '创建', value: runtime?.createdAt },
+              { label: '开始', value: runtime?.lastStartProcessTime },
+              { label: '结束', value: runtime?.lastEndProcessTime },
+            ].filter((t) => t.value)
 
             return (
               <div
@@ -258,17 +263,11 @@ export function ProcessorPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <h3 className="truncate font-medium leading-tight">{processor.name}</h3>
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                           {processor.category && (
                             <Badge variant="secondary" className="h-5 text-xs font-normal">
                               {processor.category}
                             </Badge>
-                          )}
-                          {lastRun && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {lastRun}
-                            </span>
                           )}
                           {processor.tags?.length > 0 && (
                             <span className="hidden text-xs sm:inline">
@@ -277,6 +276,17 @@ export function ProcessorPage() {
                             </span>
                           )}
                         </div>
+                        {/* 时间信息 */}
+                        {times.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                            {times.map((t) => (
+                              <span key={t.label} className="flex items-center gap-1">
+                                <span className="text-muted-foreground/70">{t.label}</span>
+                                <span>{toRelativeDate(t.value)}</span>
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* 操作区域 */}
