@@ -67,6 +67,10 @@ function toDateWithRelative(text?: string) {
 
 export function ProcessorPage() {
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    document.title = '处理器 - SourceDownloader'
+  }, [])
   const [processors, setProcessors] = useState<Processor[]>([])
   const [processNameFilter, setProcessNameFilter] = useState('')
   const [creationFormOpen, setCreationFormOpen] = useState(false)
@@ -136,14 +140,9 @@ export function ProcessorPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight">处理器</h1>
-            <p className="text-sm text-muted-foreground">更清晰地查看运行状态、错误信息和常用操作。</p>
-          </div>
-
+    <div className="space-y-8">
+      <div className="space-y-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative w-full sm:w-72">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -161,7 +160,7 @@ export function ProcessorPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-3">
           {summary.map((item) => (
             <Card key={item.label}>
               <CardContent className="flex items-center justify-between p-5">
@@ -179,7 +178,7 @@ export function ProcessorPage() {
       </div>
 
       {isInitialLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <Card key={index} className="overflow-hidden">
               <CardContent className="space-y-4 p-6">
@@ -233,7 +232,7 @@ export function ProcessorPage() {
       ) : null}
 
       {!isInitialLoading && filteredData.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {filteredData.map((processor) => {
             const hasError = Boolean(processor.errorMessage)
 
@@ -303,9 +302,9 @@ export function ProcessorPage() {
                   </div>
                 </CardHeader>
 
-                <CardContent className="flex flex-1 flex-col gap-4 p-6">
-                  <div className="rounded-lg border bg-muted/30 p-4">
-                    <div className="mb-3 flex items-center justify-between gap-3">
+                <CardContent className="flex flex-1 flex-col gap-5 p-6">
+                  <div className="rounded-lg border bg-muted/30 p-5">
+                    <div className="mb-4 flex items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-medium">运行时间</p>
                         <p className="text-xs text-muted-foreground">展示最近一次创建和执行信息</p>
@@ -342,7 +341,7 @@ export function ProcessorPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center justify-between rounded-lg border p-5">
                     <div className="flex items-center gap-3">
                       <span className={cn('h-2.5 w-2.5 rounded-full', processor.enabled ? 'bg-emerald-500' : 'bg-muted-foreground/40')} />
                       <div>
@@ -354,7 +353,7 @@ export function ProcessorPage() {
                   </div>
 
                   {hasError ? (
-                    <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-5 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
                       <div className="mb-2 flex items-center gap-2 text-sm font-medium">
                         <AlertCircle className="h-4 w-4" />
                         错误信息
