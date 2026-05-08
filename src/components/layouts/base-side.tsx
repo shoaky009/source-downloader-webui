@@ -12,8 +12,8 @@ const navItems = [
 
 export function AppSidebar() {
   return (
-    <aside className="hidden w-56 shrink-0 border-r bg-muted/20 md:block">
-      <nav className="flex flex-col gap-1 p-2">
+    <aside className="hidden h-screen w-56 shrink-0 border-r bg-muted/20 md:block">
+      <nav className="flex h-full flex-col gap-1 overflow-y-auto p-2">
         {navItems.map((item) => {
           const Icon = item.icon
           return (

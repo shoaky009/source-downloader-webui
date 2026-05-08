@@ -5,11 +5,11 @@ import { AppSidebar } from '~/components/layouts/base-side'
 
 export function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+      <AppSidebar />
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
       <AppHeader />
-      <div className="flex min-h-0 flex-1">
-        <AppSidebar />
-        <main className="min-w-0 flex-1 overflow-auto p-4">{children}</main>
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-4">{children}</main>
       </div>
     </div>
   )
