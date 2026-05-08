@@ -5,7 +5,7 @@ import { ItemContentDetail } from '~/components/item-content-detail'
 import { JsonEditor } from '~/components/shared/json-editor'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { Switch } from '~/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table'
 import {
@@ -134,6 +134,7 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
         <DialogContent className="max-w-6xl">
           <DialogHeader>
             <DialogTitle>Dry Run</DialogTitle>
+            <DialogDescription>展示当前处理器的演练执行结果和产出文件。</DialogDescription>
           </DialogHeader>
           <div className="max-h-[70vh] overflow-auto rounded-md border">
             <Table>
@@ -187,6 +188,7 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
         <DialogContent className="max-w-5xl">
           <DialogHeader>
             <DialogTitle>文件内容</DialogTitle>
+            <DialogDescription>查看当前演练结果关联的文件内容明细。</DialogDescription>
           </DialogHeader>
           <div className="max-h-[70vh] space-y-4 overflow-auto">
             {fileContents.map((file) => (
