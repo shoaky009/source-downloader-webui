@@ -1,4 +1,4 @@
-import Form from '@rjsf/core'
+import Form from '@rjsf/shadcn'
 import validator from '@rjsf/validator-ajv8'
 import { useMemo, useState } from 'react'
 
@@ -96,6 +96,10 @@ export function ComponentForm() {
 
   return (
     <div className="space-y-4">
+      <div className="space-y-1">
+        <h2 className="text-lg font-semibold">新建组件</h2>
+        <p className="text-sm text-muted-foreground">先选择组件类型和类型名称，再按需填写组件属性。</p>
+      </div>
       <div className="grid gap-4">
         <FormRow label="组件类型" required>
           <SingleSelect options={componentTypeOptions} value={formData.type} onChange={handleTypeSelected} placeholder="选择组件类型" />

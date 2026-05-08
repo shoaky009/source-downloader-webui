@@ -6,7 +6,7 @@ import { ComponentForm } from '~/components/component-form'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
-import { Dialog, DialogContent } from '~/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import type { Component } from '~/services/data.service'
 import { componentService } from '~/services/data.service'
@@ -293,7 +293,11 @@ export function ComponentPage() {
       )}
 
       <Dialog open={creationFormOpen} onOpenChange={setCreationFormOpen}>
-        <DialogContent className="max-w-5xl">
+        <DialogContent className="max-h-[85vh] max-w-5xl overflow-y-auto">
+          <DialogHeader className="sr-only">
+            <DialogTitle>新建组件</DialogTitle>
+            <DialogDescription>选择组件类型并填写组件属性，创建新的组件配置。</DialogDescription>
+          </DialogHeader>
           <ComponentForm />
         </DialogContent>
       </Dialog>

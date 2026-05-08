@@ -110,11 +110,12 @@ export function SingleSelect({
   placeholder: string
   disabled?: boolean
 }) {
+  const normalizedValue = value ?? ''
   const selected = options.find((option) => option.value === value)
 
   return (
     <Select
-      value={value}
+      value={normalizedValue}
       onValueChange={(next) => onChange(next === CLEAR_SELECT_VALUE ? undefined : next)}
       disabled={disabled}
     >
