@@ -16,6 +16,14 @@ export interface SelectOption {
 
 const CLEAR_SELECT_VALUE = '__clear__'
 
+function matchesOption(option: SelectOption, query: string) {
+  const normalizedQuery = query.trim().toLowerCase()
+  if (!normalizedQuery) {
+    return true
+  }
+  return option.label.toLowerCase().includes(normalizedQuery) || option.value.toLowerCase().includes(normalizedQuery)
+}
+
 export function MultiSelect({
   options,
   value,
@@ -63,10 +71,7 @@ function MultiSelectPanel({
 }) {
   const [query, setQuery] = useState('')
   const filteredOptions = useMemo(() => {
-    if (!query) {
-      return options
-    }
-    return options.filter((option) => option.label.toLowerCase().includes(query.toLowerCase()))
+    return options.filter((option) => matchesOption(option, query))
   }, [options, query])
 
   return (
@@ -110,12 +115,11 @@ export function SingleSelect({
   placeholder: string
   disabled?: boolean
 }) {
-  const normalizedValue = value ?? ''
   const selected = options.find((option) => option.value === value)
 
   return (
     <Select
-      value={normalizedValue}
+      value={value ?? ''}
       onValueChange={(next) => onChange(next === CLEAR_SELECT_VALUE ? undefined : next)}
       disabled={disabled}
     >

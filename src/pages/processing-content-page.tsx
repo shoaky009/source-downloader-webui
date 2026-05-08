@@ -387,7 +387,7 @@ export function ProcessingContentPage() {
         )}
 
         {/* 记录卡片 */}
-        <div className="grid gap-3 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid gap-3">
           {itemContents.map((row) => {
             const selected = selectedRows.some((item) => item.id === row.id)
             const statusInfo = itemStatusOf(row.status)

@@ -5,8 +5,8 @@ import { useMemo, useState } from 'react'
 import { KeyValueField } from '@/components/jsonschema/key-value-field'
 import { FormRow } from '@/components/shared/form-row'
 import { Button } from '@/components/ui/button'
+import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
-import { SingleSelect } from '@/components/shared/multi-select'
 import { componentService } from '@/services/data.service'
 
 interface ComponentType {
@@ -102,10 +102,21 @@ export function ComponentForm() {
       </div>
       <div className="grid gap-4">
         <FormRow label="组件类型" required>
-          <SingleSelect options={componentTypeOptions} value={formData.type} onChange={handleTypeSelected} placeholder="选择组件类型" />
+          <Combobox
+            options={componentTypeOptions}
+            value={formData.type}
+            onChange={handleTypeSelected}
+            placeholder="选择组件类型"
+          />
         </FormRow>
         <FormRow label="组件类型名称" required>
-          <SingleSelect options={typeNameOptions} value={formData.typeName} onChange={handleTypeNameSelected} placeholder="先选择组件类型" disabled={!formData.type} />
+          <Combobox
+            options={typeNameOptions}
+            value={formData.typeName}
+            onChange={handleTypeNameSelected}
+            placeholder="先选择组件类型"
+            disabled={!formData.type}
+          />
         </FormRow>
         <FormRow label="组件名称">
           <Input value={formData.name ?? ''} onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))} />
