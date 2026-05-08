@@ -1,20 +1,6 @@
-import {createRouter, createWebHistory, RouteRecordRaw} from 'vue-router'
-import Processor from './views/Processor.vue'
-import ProcessingContent from './views/ProcessingContent.vue'
-import Component from './views/Component.vue'
-import Setting from './views/Setting.vue'
-
-const routes: RouteRecordRaw[] = [
-    {path: '/', redirect: '/processor'},
-    {path: '/processor', name: 'Processor', component: Processor},
-    {path: '/component', name: 'Component', component: Component},
-    {path: '/processing-content', name: 'ProcessingContent', component: ProcessingContent},
-    {path: '/setting', name: 'Setting', component: Setting},
+export const routes = [
+  { path: '/processor', label: '处理器' },
+  { path: '/component', label: '组件' },
+  { path: '/processing-content', label: '记录' },
+  { path: '/setting', label: '设置' },
 ]
-
-const router = createRouter({
-    history: createWebHistory(),
-    routes
-})
-
-export default router
