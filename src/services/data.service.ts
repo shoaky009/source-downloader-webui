@@ -103,6 +103,73 @@ export interface Component {
   refs?: string[]
 }
 
+export interface ConfigAssistantQuestionOption {
+  label: string
+  value: string
+  description?: string
+  recommended?: boolean
+  disabled?: boolean
+}
+
+export interface AssistantQuestion {
+  key: string
+  type: 'TEXT' | 'SINGLE_SELECT' | 'BOOLEAN' | 'MULTI_SELECT' | string
+  title?: string
+  question?: string
+  label?: string
+  description?: string
+  placeholder?: string
+  customAllowed?: boolean
+  options?: ConfigAssistantQuestionOption[]
+}
+
+export interface ConfigAssistantMissingField {
+  key: string
+  label?: string
+  description?: string
+}
+
+export interface ConfigAssistantDraft {
+  summary?: unknown
+  selectedComponentTypes?: Record<string, string> | string[]
+  componentDrafts?: unknown[]
+  processorDraft?: unknown
+  [key: string]: unknown
+}
+
+export interface ConfigAssistantDraftResponse {
+  draft: ConfigAssistantDraft
+  canApply: boolean
+  missingFields: Array<string | ConfigAssistantMissingField>
+  questions: AssistantQuestion[]
+}
+
+export interface AssistantNextActionResponse {
+  sessionId?: string
+  content: string
+  draft: ConfigAssistantDraftResponse | null
+  askedQuestion?: AssistantQuestion | null
+  nextAction?: 'ASK_QUESTION' | 'APPLY' | 'ask' | 'confirm' | 'apply-ready' | string
+}
+
+export interface AiDraftRequest {
+  sessionId?: string
+  input: string
+  answers: Record<string, unknown>
+  draft?: ConfigAssistantDraftResponse | null
+}
+
+export interface AiApplyRequest {
+  sessionId?: string
+  draft: ConfigAssistantDraft
+}
+
+export interface AiApplyResponse {
+  sessionId: string
+  processorName: string
+  content: string
+}
+
 class ProcessingContentService {
   async query(query: Record<string, string>): Promise<ScrollResponse<ProcessingContent>> {
     const filteredQuery = Object.entries(query).reduce<Record<string, string>>((acc, [key, value]) => {
@@ -228,6 +295,20 @@ class ComponentService {
   }
 }
 
+class AiAssistantService {
+  async draft(payload: AiDraftRequest): Promise<AssistantNextActionResponse> {
+    return instance
+      .post(`/api/ai/draft`, payload)
+      .then((res: AxiosResponse<AssistantNextActionResponse>) => res.data)
+  }
+
+  async apply(sessionId: string | undefined, draft: ConfigAssistantDraft): Promise<AiApplyResponse> {
+    return instance
+      .post(`/api/ai/apply`, { sessionId, draft } satisfies AiApplyRequest, { alertMessage: '创建成功' })
+      .then((res: AxiosResponse<AiApplyResponse>) => res.data)
+  }
+}
+
 class ApplicationService {
   async reload() {
     return instance.post(`/api/application/reload`, null, { alertMessage: '重载成功' })
@@ -314,5 +395,6 @@ export function fileStatusGrouping(fileContents: FileContent[]): Map<TaggableSta
 export const processingContentService = new ProcessingContentService()
 export const processorService = new ProcessorService()
 export const componentService = new ComponentService()
+export const aiAssistantService = new AiAssistantService()
 export const applicationService = new ApplicationService()
 export const actuatorService = new ActuatorService()

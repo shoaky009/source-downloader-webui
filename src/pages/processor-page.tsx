@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
+import { ConfigAssistantForm } from '@/components/config-assistant-form'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { ProcessorForm } from '@/components/processor-form'
 import { ProcessorDryRun } from '@/components/processor-dry-run'
@@ -23,6 +24,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import type { Processor } from '@/services/data.service'
 import { processorService } from '@/services/data.service'
@@ -413,12 +415,28 @@ export function ProcessorPage() {
       </Dialog>
 
       <Dialog open={creationFormOpen} onOpenChange={setCreationFormOpen}>
-        <DialogContent className="max-w-5xl">
+        <DialogContent className="flex max-h-[90vh] max-w-5xl flex-col overflow-hidden">
           <DialogHeader className="sr-only">
             <DialogTitle>新建处理器</DialogTitle>
             <DialogDescription>填写处理器配置并创建新的处理器。</DialogDescription>
           </DialogHeader>
-          <ProcessorForm />
+          <Tabs defaultValue="assistant" className="flex min-h-0 w-full flex-1 flex-col">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="assistant">智能助手</TabsTrigger>
+              <TabsTrigger value="manual">手动表单</TabsTrigger>
+            </TabsList>
+            <TabsContent value="assistant" className="min-h-0 flex-1 overflow-y-auto pr-1">
+              <ConfigAssistantForm
+                onCreated={async () => {
+                  setCreationFormOpen(false)
+                  await fetchProcessors()
+                }}
+              />
+            </TabsContent>
+            <TabsContent value="manual" className="min-h-0 flex-1 overflow-y-auto pr-1">
+              <ProcessorForm />
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>

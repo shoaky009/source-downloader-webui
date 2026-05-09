@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { FileContentDetail } from '@/components/file-content-detail'
 import { ItemContentDetail } from '@/components/item-content-detail'
@@ -65,10 +65,13 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
   const [fileContents, setFileContents] = useState<FileContent[]>([])
   const [showFileContentDialog, setShowFileContentDialog] = useState(false)
 
+  const dryRunOpenedRef = useRef(false)
+
   const handleDryRunFormSubmit = async () => {
     if (!processorName) {
       return
     }
+    dryRunOpenedRef.current = true
     setDryRunOpened(true)
     setDryRunResult([])
     setLoading(true)
@@ -92,7 +95,7 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
     }
 
     let firstLineFlag = true
-    for await (const line of makeStreamLineIterator(body, () => !dryRunOpened)) {
+    for await (const line of makeStreamLineIterator(body, () => !dryRunOpenedRef.current)) {
       if (firstLineFlag) {
         setLoading(false)
         firstLineFlag = false
@@ -126,6 +129,7 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
       </div>
 
       <Dialog open={dryRunOpened} onOpenChange={(open) => {
+        dryRunOpenedRef.current = open
         setDryRunOpened(open)
         if (!open) {
           setDryRunResult([])
