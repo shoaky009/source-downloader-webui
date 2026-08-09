@@ -78,6 +78,31 @@ export type DryRunEvent =
   | { type: 'complete'; summary: DryRunSummary }
   | { type: 'runError'; error: DryRunError }
 
+export function normalizeDryRunEvent(event: DryRunEvent): DryRunEvent {
+  if (event.type !== 'item') {
+    return event
+  }
+
+  return {
+    ...event,
+    content: {
+      ...event.content,
+      status: event.content.status
+        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+        .toUpperCase(),
+      itemContent: {
+        ...event.content.itemContent,
+        fileContents: event.content.itemContent.fileContents.map((file) => ({
+          ...file,
+          status: file.status
+            .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+            .toUpperCase(),
+        })),
+      },
+    },
+  }
+}
+
 export interface ItemContent {
   sourceItem: SourceItem
   itemVariables: Record<string, unknown>
@@ -85,19 +110,21 @@ export interface ItemContent {
 }
 
 export interface FileContent {
+  downloadPath: string
   fileDownloadPath: string
+  sourceSavePath: string
   targetSavePath: string
   targetFilename: string
   fileSavePathPattern: string
   filenamePattern: string
   patternVariables: Record<string, unknown>
-  processedVariables: Record<string, unknown>
+  processedVariables: Record<string, unknown> | null
   attrs: Record<string, unknown>
   tags: string[]
   errors: string[]
   status: string
-  fileUri: string
-  existTargetPath: string
+  fileUri: string | null
+  existTargetPath: string | null
 }
 
 export interface Processor {
@@ -260,7 +287,7 @@ class ProcessorService {
   async dryRun(name: string, options: object): Promise<DryRunEvent[]> {
     return instance
       .post(`/api/processor/${name}/dry-run`, options)
-      .then((response: AxiosResponse<DryRunEvent[]>) => response.data)
+      .then((response: AxiosResponse<DryRunEvent[]>) => response.data.map(normalizeDryRunEvent))
   }
 
   async dryRunStream(name: string, options: object): Promise<Response> {

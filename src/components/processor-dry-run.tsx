@@ -15,6 +15,7 @@ import {
   type FileContent,
   fileStatusGrouping,
   itemStatusOf,
+  normalizeDryRunEvent,
   processorService,
 } from '@/services/data.service'
 
@@ -126,7 +127,7 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
         if (!line.trim()) {
           continue
         }
-        const event = JSON.parse(line) as DryRunEvent
+        const event = normalizeDryRunEvent(JSON.parse(line) as DryRunEvent)
         applyDryRunEvent(event)
         if (event.type === 'complete' || event.type === 'runError') {
           terminalReceived = true
