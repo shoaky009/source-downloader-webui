@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
-import { ConfigAssistantForm } from '@/components/config-assistant-form'
+// import { ConfigAssistantForm } from '@/components/config-assistant-form'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { ProcessorForm } from '@/components/processor-form'
 import { ProcessorDryRun } from '@/components/processor-dry-run'
@@ -426,12 +426,12 @@ export function ProcessorPage() {
               <TabsTrigger value="manual">手动表单</TabsTrigger>
             </TabsList>
             <TabsContent value="assistant" className="min-h-0 flex-1 overflow-y-auto pr-1">
-              <ConfigAssistantForm
-                onCreated={async () => {
-                  setCreationFormOpen(false)
-                  await fetchProcessors()
-                }}
-              />
+              {/*<ConfigAssistantForm*/}
+              {/*  onCreated={async () => {*/}
+              {/*    setCreationFormOpen(false)*/}
+              {/*    await fetchProcessors()*/}
+              {/*  }}*/}
+              {/*/>*/}
             </TabsContent>
             <TabsContent value="manual" className="min-h-0 flex-1 overflow-y-auto pr-1">
               <ProcessorForm />

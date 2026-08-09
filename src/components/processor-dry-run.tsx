@@ -9,10 +9,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
+  type DryRunError,
+  type DryRunEvent,
+  type DryRunSummary,
   type FileContent,
   fileStatusGrouping,
   itemStatusOf,
-  type ProcessingContent,
   processorService,
 } from '@/services/data.service'
 
@@ -56,16 +58,35 @@ async function* makeStreamLineIterator(readerStream: ReadableStream<Uint8Array>,
   }
 }
 
+type DryRunRow = Extract<DryRunEvent, { type: 'item' | 'itemError' }>
+
 export function ProcessorDryRun({ processorName }: { processorName?: string }) {
   const [dryRunFormData, setDryRunFormData] = useState({ filterProcessed: true, pointer: '{}' })
   const [streamable, setStreamable] = useState(true)
   const [loading, setLoading] = useState(false)
   const [dryRunOpened, setDryRunOpened] = useState(false)
-  const [dryRunResult, setDryRunResult] = useState<ProcessingContent[]>([])
+  const dryRunOpenedRef = useRef(false)
+  const [dryRunRows, setDryRunRows] = useState<DryRunRow[]>([])
+  const [runError, setRunError] = useState<DryRunError>()
+  const [responseError, setResponseError] = useState<string>()
+  const [summary, setSummary] = useState<DryRunSummary>()
   const [fileContents, setFileContents] = useState<FileContent[]>([])
   const [showFileContentDialog, setShowFileContentDialog] = useState(false)
+  const applyDryRunEvent = (event: DryRunEvent) => {
+    switch (event.type) {
+      case 'item':
+      case 'itemError':
+        setDryRunRows((current) => [...current, event])
+        break
+      case 'complete':
+        setSummary(event.summary)
+        break
+      case 'runError':
+        setRunError(event.error)
+        break
+    }
+  }
 
-  const dryRunOpenedRef = useRef(false)
 
   const handleDryRunFormSubmit = async () => {
     if (!processorName) {
@@ -73,41 +94,54 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
     }
     dryRunOpenedRef.current = true
     setDryRunOpened(true)
-    setDryRunResult([])
+    setDryRunRows([])
+    setRunError(undefined)
+    setResponseError(undefined)
+    setSummary(undefined)
     setLoading(true)
 
-    const payload = {
-      filterProcessed: dryRunFormData.filterProcessed,
-      pointer: dryRunFormData.pointer.trim() ? JSON.parse(dryRunFormData.pointer) : null,
-    }
+    try {
+      const payload = {
+        filterProcessed: dryRunFormData.filterProcessed,
+        pointer: dryRunFormData.pointer.trim() ? JSON.parse(dryRunFormData.pointer) : null,
+      }
 
-    if (!streamable) {
-      const response = await processorService.dryRun(processorName, payload).finally(() => setLoading(false))
-      setDryRunResult(response.data)
-      return
-    }
+      if (!streamable) {
+        const events = await processorService.dryRun(processorName, payload)
+        events.forEach(applyDryRunEvent)
+        if (!events.some((event) => event.type === 'complete' || event.type === 'runError')) {
+          setResponseError('响应缺少终结事件')
+        }
+        return
+      }
 
-    const response = await processorService.dryRunStream(processorName, payload)
-    const body = response.body
-    if (!body) {
+      const response = await processorService.dryRunStream(processorName, payload)
+      const body = response.body
+      if (!body) {
+        throw new Error('浏览器未提供响应流')
+      }
+
+      let terminalReceived = false
+      for await (const line of makeStreamLineIterator(body, () => !dryRunOpenedRef.current)) {
+        if (!line.trim()) {
+          continue
+        }
+        const event = JSON.parse(line) as DryRunEvent
+        applyDryRunEvent(event)
+        if (event.type === 'complete' || event.type === 'runError') {
+          terminalReceived = true
+        }
+      }
+      if (dryRunOpenedRef.current && !terminalReceived) {
+        setResponseError('流式响应在终结事件前中断')
+      }
+    } catch (error) {
+      if (dryRunOpenedRef.current) {
+        setResponseError(error instanceof Error ? error.message : String(error))
+      }
+    } finally {
       setLoading(false)
-      return
     }
-
-    let firstLineFlag = true
-    for await (const line of makeStreamLineIterator(body, () => !dryRunOpenedRef.current)) {
-      if (firstLineFlag) {
-        setLoading(false)
-        firstLineFlag = false
-      }
-      try {
-        const content = JSON.parse(line) as ProcessingContent
-        setDryRunResult((current) => [...current, content])
-      } catch {
-        console.warn('Failed to parse line:', line)
-      }
-    }
-    setLoading(false)
   }
 
   return (
@@ -132,7 +166,10 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
         dryRunOpenedRef.current = open
         setDryRunOpened(open)
         if (!open) {
-          setDryRunResult([])
+          setDryRunRows([])
+          setRunError(undefined)
+          setResponseError(undefined)
+          setSummary(undefined)
         }
       }}>
         <DialogContent className="max-w-6xl">
@@ -140,38 +177,83 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
             <DialogTitle>Dry Run</DialogTitle>
             <DialogDescription>展示当前处理器的演练执行结果和产出文件。</DialogDescription>
           </DialogHeader>
+          {runError ? (
+            <div className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+              <div className="font-medium">Dry-run 执行失败</div>
+              <div>{runError.message}</div>
+            </div>
+          ) : null}
+          {responseError ? (
+            <div className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+              <div className="font-medium">响应异常</div>
+              <div>{responseError}</div>
+            </div>
+          ) : null}
           <div className="max-h-[70vh] overflow-auto rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Hash</TableHead>
                   <TableHead>条目</TableHead>
-                  <TableHead>文件</TableHead>
+                  <TableHead>文件 / 错误</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {dryRunResult.map((row) => {
-                  const status = itemStatusOf(row.status)
+                {dryRunRows.map((row) => {
+                  if (row.type === 'itemError') {
+                    return (
+                      <TableRow key={`${row.itemHash}-error`}>
+                        <TableCell>
+                          <div className="flex flex-col gap-2">
+                            <Badge variant="destructive">状态:失败</Badge>
+                            <Badge variant={row.action === 'continue' ? 'outline' : 'destructive'}>
+                              {row.action === 'continue' ? '错误后继续' : '错误后停止'}
+                            </Badge>
+                            <Badge variant="secondary">Hash:{row.itemHash}</Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell className="min-w-[360px]">
+                          <ItemContentDetail content={{
+                            sourceItem: row.item,
+                            itemVariables: {},
+                            fileContents: [],
+                          }} />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex max-w-md flex-col gap-2 text-sm">
+                            <span className="font-medium text-destructive">{row.error.message}</span>
+                            <span className="text-muted-foreground">
+                              {row.error.kind === 'retryable' ? '可重试错误' : '不可重试错误'}
+                              {row.error.skippable ? ' · 可跳过' : ''}
+                            </span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  }
+
+                  const content = row.content
+                  const status = itemStatusOf(content.status)
                   return (
-                    <TableRow key={`${row.itemHash}-${row.id ?? 'dry-run'}`}>
+                    <TableRow key={`${content.itemHash}-${content.id ?? 'dry-run'}`}>
                       <TableCell>
                         <div className="flex flex-col gap-2">
                           <Badge variant={statusVariant(status.type)}>状态:{status.label}</Badge>
-                          <Badge variant="secondary">Hash:{row.itemHash}</Badge>
+                          <Badge variant="secondary">Hash:{content.itemHash}</Badge>
                         </div>
                       </TableCell>
                       <TableCell className="min-w-[360px]">
-                        <ItemContentDetail content={row.itemContent} />
+                        <ItemContentDetail content={content.itemContent} />
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-2">
                           <Button variant="outline" size="sm" onClick={() => {
-                            setFileContents(row.itemContent.fileContents)
+                            setFileContents(content.itemContent.fileContents)
                             setShowFileContentDialog(true)
                           }}>
-                            查看{row.itemContent.fileContents.length}个文件
+                            查看{content.itemContent.fileContents.length}个文件
                           </Button>
-                          {Array.from(fileStatusGrouping(row.itemContent.fileContents)).map(([groupStatus, count]) => (
+                          {Array.from(fileStatusGrouping(content.itemContent.fileContents)).map(([groupStatus, count]) => (
                             <Badge key={groupStatus.value} variant={statusVariant(groupStatus.type)}>
                               {groupStatus.label}:{count}
                             </Badge>
@@ -184,6 +266,15 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
               </TableBody>
             </Table>
             {loading ? <div className="p-4 text-sm text-muted-foreground">加载中...</div> : null}
+            {summary ? (
+              <div className="flex flex-wrap gap-2 border-t p-3 text-sm">
+                <Badge variant="secondary">成功:{summary.succeeded}</Badge>
+                <Badge variant={summary.failed > 0 ? 'destructive' : 'secondary'}>
+                  失败:{summary.failed}
+                </Badge>
+                {summary.stopped ? <Badge variant="destructive">已因错误停止</Badge> : null}
+              </div>
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>

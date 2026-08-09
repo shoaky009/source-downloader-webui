@@ -54,6 +54,30 @@ export interface SourceItem {
   tags: string[]
 }
 
+export interface DryRunError {
+  message: string
+  kind: 'retryable' | 'nonRetryable'
+  skippable: boolean
+}
+
+export interface DryRunSummary {
+  succeeded: number
+  failed: number
+  stopped: boolean
+}
+
+export type DryRunEvent =
+  | { type: 'item'; content: ProcessingContent }
+  | {
+      type: 'itemError'
+      itemHash: string
+      item: SourceItem
+      error: DryRunError
+      action: 'continue' | 'stop'
+    }
+  | { type: 'complete'; summary: DryRunSummary }
+  | { type: 'runError'; error: DryRunError }
+
 export interface ItemContent {
   sourceItem: SourceItem
   itemVariables: Record<string, unknown>
@@ -233,16 +257,21 @@ class ProcessorService {
     return instance.put(`/api/processor/${name}/pointer`, state, { alertMessage: '修改成功' })
   }
 
-  async dryRun(name: string, options: object) {
-    return instance.post(`/api/processor/${name}/dry-run`, options)
+  async dryRun(name: string, options: object): Promise<DryRunEvent[]> {
+    return instance
+      .post(`/api/processor/${name}/dry-run`, options)
+      .then((response: AxiosResponse<DryRunEvent[]>) => response.data)
   }
 
-  async dryRunStream(name: string, options: object) {
-    const response = await fetch(`${API_BASE_URL()}/api/processor/${name}/dry-run-stream`, {
-      method: 'post',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(options),
-    })
+  async dryRunStream(name: string, options: object): Promise<Response> {
+    const response = await fetch(
+      `${API_BASE_URL()}/api/processor/${name}/dry-run-stream`,
+      {
+        method: 'post',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(options),
+      },
+    )
     if (!response.ok) {
       throw new Error('Failed to fetch dry run data')
     }
@@ -329,6 +358,7 @@ export interface TaggableStatus {
 
 export const fileContentStatuses: TaggableStatus[] = [
   { label: '正常', value: 'NORMAL', type: 'success' },
+  { label: '未检测', value: 'UNDETECTED', type: 'info' },
   { label: '已下载', value: 'DOWNLOADED', type: 'info' },
   { label: '变量错误', value: 'VARIABLE_ERROR', type: 'danger' },
   { label: '已存在', value: 'TARGET_EXISTS', type: 'warning' },
@@ -344,13 +374,11 @@ const fileStatusMapping = fileContentStatuses.reduce<Record<string, TaggableStat
 }, {})
 
 export function fileStatusOf(status: string | undefined): TaggableStatus {
-  return status
-    ? fileStatusMapping[status]
-    : {
-        label: status ?? '未知',
-        value: status ?? 'UNKNOWN',
-        type: 'warning',
-      }
+  return (status ? fileStatusMapping[status] : undefined) ?? {
+    label: status ?? '未知',
+    value: status ?? 'UNKNOWN',
+    type: 'warning',
+  }
 }
 
 export const processingContentStatuses: TaggableStatus[] = [
@@ -362,6 +390,7 @@ export const processingContentStatuses: TaggableStatus[] = [
   { label: '已存在', value: 'TARGET_ALREADY_EXISTS', type: 'warning' },
   { label: '下载失败', value: 'DOWNLOAD_FAILED', type: 'danger' },
   { label: '处理异常', value: 'FAILURE', type: 'danger' },
+  { label: '初始', value: 'INIT', type: 'info' },
 ]
 
 const itemStatusMapping = processingContentStatuses.reduce<Record<string, TaggableStatus>>((acc, cur) => {
@@ -370,13 +399,11 @@ const itemStatusMapping = processingContentStatuses.reduce<Record<string, Taggab
 }, {})
 
 export function itemStatusOf(status: string | undefined): TaggableStatus {
-  return status
-    ? itemStatusMapping[status]
-    : {
-        label: status ?? '未知',
-        value: status ?? 'UNKNOWN',
-        type: 'warning',
-      }
+  return (status ? itemStatusMapping[status] : undefined) ?? {
+    label: status ?? '未知',
+    value: status ?? 'UNKNOWN',
+    type: 'warning',
+  }
 }
 
 export function fileStatusGrouping(fileContents: FileContent[]): Map<TaggableStatus, number> {
