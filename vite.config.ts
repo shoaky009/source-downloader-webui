@@ -3,7 +3,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import buildInfo from 'vite-plugin-build-info'
 
-const pathSrc = path.resolve(__dirname, 'src')
+const pathSrc = path.resolve(import.meta.dirname, 'src')
 
 export default defineConfig({
   resolve: {
@@ -14,6 +14,7 @@ export default defineConfig({
   },
   plugins: [react(), buildInfo({ enableMeta: false, enableGlobal: true })],
   build: {
+    chunkSizeWarningLimit: 550,
     rollupOptions: {
       output: {
         manualChunks(id) {
