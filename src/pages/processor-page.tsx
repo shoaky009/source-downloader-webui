@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { ProcessorForm } from '@/components/processor-form'
 import { ProcessorDryRun } from '@/components/processor-dry-run'
+import { ProcessorRuns } from '@/components/processor-runs'
 import { ShowSourceState } from '@/components/show-source-state'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -69,6 +70,8 @@ export function ProcessorPage() {
   const [stateProcessor, setStateProcessor] = useState<string>()
   const [openDryRunForm, setOpenDryRunForm] = useState(false)
   const [dryRunProcessor, setDryRunProcessor] = useState<string>()
+  const [runsOpen, setRunsOpen] = useState(false)
+  const [runsProcessor, setRunsProcessor] = useState<string>()
 
   const fetchProcessors = async () => {
     setLoading(true)
@@ -380,6 +383,18 @@ export function ProcessorPage() {
                         variant="outline"
                         size="sm"
                         className="h-7 gap-1 px-2 text-xs"
+                        onClick={() => {
+                          setRunsProcessor(processor.name)
+                          setRunsOpen(true)
+                        }}
+                      >
+                        <Clock className="h-3 w-3" />
+                        运行
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 gap-1 px-2 text-xs"
                         onClick={() => void handleTrigger(processor.name)}
                       >
                         <Zap className="h-3 w-3" />
@@ -401,6 +416,16 @@ export function ProcessorPage() {
           正在刷新...
         </div>
       )}
+
+      <Dialog open={runsOpen} onOpenChange={setRunsOpen}>
+        <DialogContent className="max-w-6xl">
+          <DialogHeader>
+            <DialogTitle>处理器运行</DialogTitle>
+            <DialogDescription>查看运行记录，并执行与当前处理器相关的操作。</DialogDescription>
+          </DialogHeader>
+          <ProcessorRuns processorName={runsProcessor} open={runsOpen} />
+        </DialogContent>
+      </Dialog>
 
       <ShowSourceState processorName={stateProcessor} open={stateJsonViewer} onOpenChange={setStateJsonViewer} />
 

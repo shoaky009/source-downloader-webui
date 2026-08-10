@@ -143,6 +143,29 @@ export interface ProcessorRuntime {
   lastProcessFailedMessage: string
 }
 
+export type ProcessorRunKind =
+  | 'automatic'
+  | 'scheduledFull'
+  | 'manualFull'
+  | 'items'
+  | 'rename'
+  | 'reprocess'
+  | 'dryRunCollected'
+  | 'dryRunStreamed'
+
+export type ProcessorRunStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled'
+
+export interface ProcessorRun {
+  id: number
+  processorName: string
+  kind: ProcessorRunKind
+  status: ProcessorRunStatus
+  createdAt: string
+  startedAt?: string
+  finishedAt?: string
+  failure?: string
+}
+
 export interface Component {
   type: string
   name: string
@@ -274,6 +297,21 @@ class ProcessorService {
 
   async rename(name: string) {
     return instance.get(`/api/processor/${name}/rename`, { alertMessage: '修操成功' })
+  }
+
+  async runs(processorName?: string): Promise<ProcessorRun[]> {
+    return instance.get(`/api/processor/runs`).then((response: AxiosResponse<ProcessorRun[]>) => {
+      const runs = response.data
+      return processorName ? runs.filter((run) => run.processorName === processorName) : runs
+    })
+  }
+
+  async run(id: number): Promise<ProcessorRun> {
+    return instance.get(`/api/processor/runs/${id}`).then((response: AxiosResponse<ProcessorRun>) => response.data)
+  }
+
+  async cancelRun(id: number) {
+    return instance.delete(`/api/processor/runs/${id}`, { alertMessage: '已请求取消运行' })
   }
 
   async sourceState(name: string) {
