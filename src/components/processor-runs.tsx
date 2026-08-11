@@ -120,12 +120,13 @@ export function ProcessorRuns({ processorName, open }: { processorName?: string;
 
   useEffect(() => {
     if (!open || !processorName) return
-    void loadRuns()
+    setLoading(true)
     const stream = processorService.runStream((event) => {
       setRuns((current) => applyRunEvent(current, event, processorName))
+      if (event.type === 'resync') setLoading(false)
     })
     return () => stream.close()
-  }, [loadRuns, open, processorName])
+  }, [open, processorName])
 
   const runAction = async (type: 'trigger' | 'rename') => {
     if (!processorName) return
@@ -133,7 +134,7 @@ export function ProcessorRuns({ processorName, open }: { processorName?: string;
     try {
       if (type === 'trigger') await processorService.trigger(processorName)
       else await processorService.rename(processorName)
-      await loadRuns()
+      // The stream owns run state; its ordered events must not be overwritten by a REST snapshot.
     } finally {
       setAction(undefined)
     }
