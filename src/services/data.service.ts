@@ -155,16 +155,58 @@ export type ProcessorRunKind =
 
 export type ProcessorRunStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled'
 
+export type ProcessorRunStage = 'initializing' | 'fetchingItems' | 'scanningItems' | 'processingItems' | 'finalizing'
+
+export type ProcessorItemStage =
+  | 'filteringItem'
+  | 'resolvingVariables'
+  | 'resolvingFiles'
+  | 'buildingTargets'
+  | 'filteringContent'
+  | 'checkingFiles'
+  | 'decidingReplacements'
+  | 'submittingDownload'
+  | 'movingFiles'
+  | 'replacingFiles'
+  | 'awaitingSettlement'
+  | 'persisting'
+  | 'notifying'
+
+export interface ActiveProcessorItem {
+  title: string
+  stage: ProcessorItemStage
+  startedAt: string
+}
+
+export interface ProcessorRunProgress {
+  totalItems?: number
+  completedItems: number
+  activeItems: Record<string, ActiveProcessorItem>
+}
+
 export interface ProcessorRun {
   id: number
   processorName: string
   kind: ProcessorRunKind
   status: ProcessorRunStatus
+  stage?: ProcessorRunStage
+  progress: ProcessorRunProgress
   createdAt: string
   startedAt?: string
   finishedAt?: string
   failure?: string
 }
+
+export type ProcessorRunEvent =
+  | { type: 'resync'; runs: ProcessorRun[] }
+  | { type: 'created'; run: ProcessorRun }
+  | { type: 'started'; runId: number; startedAt: string }
+  | { type: 'runStageChanged'; runId: number; stage: ProcessorRunStage }
+  | { type: 'totalItemsChanged'; runId: number; totalItems: number }
+  | { type: 'itemStarted'; runId: number; itemId: number; item: ActiveProcessorItem }
+  | { type: 'itemStageChanged'; runId: number; itemId: number; stage: ProcessorItemStage }
+  | { type: 'itemCompleted'; runId: number; itemId: number; completedItems: number }
+  | { type: 'finished'; runId: number; status: ProcessorRunStatus; finishedAt: string; failure?: string }
 
 export interface Component {
   type: string
@@ -312,6 +354,14 @@ class ProcessorService {
 
   async cancelRun(id: number) {
     return instance.delete(`/api/processor/runs/${id}`, { alertMessage: '已请求取消运行' })
+  }
+
+  runStream(onEvent: (event: ProcessorRunEvent) => void) {
+    const eventSource = new EventSource(`${API_BASE_URL()}/api/processor/runs/events`)
+    eventSource.addEventListener('processor-run', ((event: MessageEvent<string>) => {
+      onEvent(JSON.parse(event.data) as ProcessorRunEvent)
+    }) as EventListener)
+    return eventSource
   }
 
   async sourceState(name: string) {
