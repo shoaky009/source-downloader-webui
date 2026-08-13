@@ -1,16 +1,5 @@
 import debounce from 'lodash/debounce'
-import {
-  AlertCircle,
-  Calendar,
-  CheckSquare,
-  ExternalLink,
-  FileText,
-  Hash,
-  RefreshCw,
-  Search,
-  Square,
-  Trash2,
-} from 'lucide-react'
+import { AlertCircle, Calendar, CheckSquare, FileText, Hash, RefreshCw, Search, Square, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -65,7 +54,7 @@ export function ProcessingContentPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [fileContents, setFileContents] = useState<FileContent[]>([])
   const [showFileContentDialog, setShowFileContentDialog] = useState(false)
-  const [loadingFileContents, setLoadingFileContents] = useState(false)
+  const [loadingFileContentId, setLoadingFileContentId] = useState<number>()
   const [selectedProcessors, setSelectedProcessors] = useState<string[]>([])
   const [status, setStatus] = useState<string[]>([])
   const [itemHash, setItemHash] = useState('')
@@ -262,19 +251,19 @@ export function ProcessingContentPage() {
     setCreateTimeRange(normalizedRange)
     void fetchData({ clear: true, filters: { createTimeRange: normalizedRange } })
   }
-  const showFileContents = async (row: ProcessingContentSummary) => {
+  const showFileContents = async (id: number) => {
     setFileContents([])
     setShowFileContentDialog(true)
-    setLoadingFileContents(true)
+    setLoadingFileContentId(id)
 
     try {
-      const detail = await processingContentService.get(row.id)
+      const detail = await processingContentService.get(id)
       setFileContents(detail.itemContent.fileContents)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '文件详情加载失败')
       setShowFileContentDialog(false)
     } finally {
-      setLoadingFileContents(false)
+      setLoadingFileContentId(undefined)
     }
   }
 
@@ -456,24 +445,22 @@ export function ProcessingContentPage() {
                         <ItemContentDetail content={row.itemContent} />
                       </div>
 
-                      {/* 文件统计 */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 gap-1.5 text-xs"
-                          disabled={loadingFileContents}
-                          onClick={() => void showFileContents(row)}
-                        >
-                          <FileText className="h-3.5 w-3.5" />
-                          查看文件
-                        </Button>
-                        {row.renameTimes > 0 && (
-                          <Badge variant="secondary" className="text-xs">
-                            命名: {row.renameTimes}
-                          </Badge>
-                        )}
-                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1.5 text-xs"
+                        disabled={loadingFileContentId === row.id}
+                        onClick={() => void showFileContents(row.id)}
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        {loadingFileContentId === row.id ? '加载中...' : '查看文件'}
+                      </Button>
+
+                      {row.renameTimes > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          命名: {row.renameTimes}
+                        </Badge>
+                      )}
 
                       {/* 错误信息 */}
                       {row.failureReason && (
@@ -562,14 +549,14 @@ export function ProcessingContentPage() {
         <div ref={bottomRef} className="h-4" />
       </div>
 
-      {/* 文件内容弹窗 */}
+
       <Dialog open={showFileContentDialog} onOpenChange={setShowFileContentDialog}>
         <DialogContent className="max-w-5xl">
           <DialogHeader>
             <DialogTitle>文件内容详情</DialogTitle>
           </DialogHeader>
           <div className="max-h-[70vh] space-y-3 overflow-auto">
-            {loadingFileContents && (
+            {loadingFileContentId != null && (
               <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
                 <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                 加载中...
