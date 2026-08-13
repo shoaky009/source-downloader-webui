@@ -36,13 +36,18 @@ export interface ProcessingContent {
   id: number
   processorName: string
   itemHash: string
+  itemIdentity: string | null
   itemContent: ItemContent
   status: string
   renameTimes: number
-  failureReason: string
-  modifyTime: string
-  createTime: string
+  failureReason: string | null
+  createdAt: string
+  updatedAt: string | null
 }
+export interface ProcessingContentSummary extends Omit<ProcessingContent, 'itemContent'> {
+  itemContent: ItemContentSummary
+}
+
 
 export interface SourceItem {
   title: string
@@ -52,6 +57,7 @@ export interface SourceItem {
   downloadUri: string
   attrs: Record<string, unknown>
   tags: string[]
+  identity: string | null
 }
 
 export interface DryRunError {
@@ -78,34 +84,38 @@ export type DryRunEvent =
   | { type: 'complete'; summary: DryRunSummary }
   | { type: 'runError'; error: DryRunError }
 
+function normalizeStatus(status: string): string {
+  return status.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase()
+}
+
+export function normalizeProcessingContent(content: ProcessingContent): ProcessingContent {
+  return {
+    ...content,
+    status: normalizeStatus(content.status),
+    itemContent: {
+      ...content.itemContent,
+      fileContents: content.itemContent.fileContents.map((file) => ({
+        ...file,
+        status: normalizeStatus(file.status),
+      })),
+    },
+  }
+}
+
 export function normalizeDryRunEvent(event: DryRunEvent): DryRunEvent {
   if (event.type !== 'item') {
     return event
   }
 
-  return {
-    ...event,
-    content: {
-      ...event.content,
-      status: event.content.status
-        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-        .toUpperCase(),
-      itemContent: {
-        ...event.content.itemContent,
-        fileContents: event.content.itemContent.fileContents.map((file) => ({
-          ...file,
-          status: file.status
-            .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-            .toUpperCase(),
-        })),
-      },
-    },
-  }
+  return { ...event, content: normalizeProcessingContent(event.content) }
 }
 
-export interface ItemContent {
+export interface ItemContentSummary {
   sourceItem: SourceItem
   itemVariables: Record<string, unknown>
+}
+
+export interface ItemContent extends ItemContentSummary {
   fileContents: FileContent[]
 }
 
@@ -287,7 +297,7 @@ export interface AiApplyResponse {
 }
 
 class ProcessingContentService {
-  async query(query: Record<string, string>): Promise<ScrollResponse<ProcessingContent>> {
+  async query(query: Record<string, string>): Promise<ScrollResponse<ProcessingContentSummary>> {
     const filteredQuery = Object.entries(query).reduce<Record<string, string>>((acc, [key, value]) => {
       if (value !== null && value !== undefined && value !== '') {
         acc[key] = value
@@ -296,7 +306,17 @@ class ProcessingContentService {
     }, {})
     const params = new URLSearchParams(filteredQuery)
     const q = params.size === 0 ? '' : `?${params.toString()}`
-    return instance.get(`/api/processing-content${q}`).then((res: AxiosResponse<ScrollResponse<ProcessingContent>>) => res.data)
+    return instance
+      .get(`/api/processing-content${q}`)
+      .then((res: AxiosResponse<ScrollResponse<ProcessingContentSummary>>) => ({
+        ...res.data,
+        contents: res.data.contents.map((content) => ({ ...content, status: normalizeStatus(content.status) })),
+      }))
+  }
+  async get(id: number): Promise<ProcessingContent> {
+    return instance
+      .get(`/api/processing-content/${id}`)
+      .then((res: AxiosResponse<ProcessingContent>) => normalizeProcessingContent(res.data))
   }
 
   async update(id: number, data: ProcessingContent): Promise<ProcessingContent> {

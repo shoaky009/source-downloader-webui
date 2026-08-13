@@ -1,8 +1,8 @@
 import { Badge } from '@/components/ui/badge'
 import { Descriptions, DescriptionsItem } from '@/components/shared/descriptions'
-import type { ItemContent } from '@/services/data.service'
+import type { ItemContent, ItemContentSummary } from '@/services/data.service'
 
-export function ItemContentDetail({ content }: { content?: ItemContent | null }) {
+export function ItemContentDetail({ content }: { content?: ItemContentSummary | ItemContent | null }) {
   const sourceItem = content?.sourceItem
 
   return (

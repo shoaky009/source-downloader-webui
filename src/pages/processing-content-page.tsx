@@ -36,9 +36,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import {
   type FileContent,
-  fileStatusGrouping,
   itemStatusOf,
-  type ProcessingContent,
+  type ProcessingContentSummary,
   processingContentService,
   processingContentStatuses,
 } from '@/services/data.service'
@@ -60,21 +59,23 @@ interface QueryFilters {
 
 export function ProcessingContentPage() {
   useDocumentTitle('记录')
-  const [itemContents, setItemContents] = useState<ProcessingContent[]>([])
+  const [itemContents, setItemContents] = useState<ProcessingContentSummary[]>([])
   const [nextMaxId, setNextMaxId] = useState(0)
   const [loadingState, setLoadingState] = useState<'initial' | 'append' | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [fileContents, setFileContents] = useState<FileContent[]>([])
   const [showFileContentDialog, setShowFileContentDialog] = useState(false)
+  const [loadingFileContents, setLoadingFileContents] = useState(false)
   const [selectedProcessors, setSelectedProcessors] = useState<string[]>([])
   const [status, setStatus] = useState<string[]>([])
   const [itemHash, setItemHash] = useState('')
   const [itemTitle, setItemTitle] = useState('')
   const [createTimeRange, setCreateTimeRange] = useState<[string, string]>()
-  const [selectedRows, setSelectedRows] = useState<ProcessingContent[]>([])
-  const [pendingAction, setPendingAction] = useState<{ type: 'reprocess' | 'delete'; rows: ProcessingContent[] } | null>(
-    null,
-  )
+  const [selectedRows, setSelectedRows] = useState<ProcessingContentSummary[]>([])
+  const [pendingAction, setPendingAction] = useState<{
+    type: 'reprocess' | 'delete'
+    rows: ProcessingContentSummary[]
+  } | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const requestIdRef = useRef(0)
   const filtersRef = useRef<QueryFilters>({
@@ -104,8 +105,8 @@ export function ProcessingContentPage() {
     }
   }, [createTimeRange, itemHash, itemTitle, selectedProcessors, status])
 
-  const mergeContentsById = (current: ProcessingContent[], incoming: ProcessingContent[]) => {
-    const merged = new Map<number, ProcessingContent>()
+  const mergeContentsById = (current: ProcessingContentSummary[], incoming: ProcessingContentSummary[]) => {
+    const merged = new Map<number, ProcessingContentSummary>()
 
     for (const item of current) {
       merged.set(item.id, item)
@@ -261,6 +262,22 @@ export function ProcessingContentPage() {
     setCreateTimeRange(normalizedRange)
     void fetchData({ clear: true, filters: { createTimeRange: normalizedRange } })
   }
+  const showFileContents = async (row: ProcessingContentSummary) => {
+    setFileContents([])
+    setShowFileContentDialog(true)
+    setLoadingFileContents(true)
+
+    try {
+      const detail = await processingContentService.get(row.id)
+      setFileContents(detail.itemContent.fileContents)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '文件详情加载失败')
+      setShowFileContentDialog(false)
+    } finally {
+      setLoadingFileContents(false)
+    }
+  }
+
 
   const toggleSelectAll = () => {
     if (selectedRows.length === itemContents.length) {
@@ -392,7 +409,6 @@ export function ProcessingContentPage() {
             const selected = selectedRows.some((item) => item.id === row.id)
             const statusInfo = itemStatusOf(row.status)
             const hasError = statusInfo.type === 'danger'
-            const fileStatusGroups = Array.from(fileStatusGrouping(row.itemContent.fileContents))
 
             return (
               <Card
@@ -446,19 +462,12 @@ export function ProcessingContentPage() {
                           size="sm"
                           variant="outline"
                           className="h-7 gap-1.5 text-xs"
-                          onClick={() => {
-                            setFileContents(row.itemContent.fileContents)
-                            setShowFileContentDialog(true)
-                          }}
+                          disabled={loadingFileContents}
+                          onClick={() => void showFileContents(row)}
                         >
                           <FileText className="h-3.5 w-3.5" />
-                          {row.itemContent.fileContents.length} 个文件
+                          查看文件
                         </Button>
-                        {fileStatusGroups.map(([groupStatus, count]) => (
-                          <Badge key={groupStatus.value} variant={statusVariant(groupStatus.type)} className="text-xs">
-                            {groupStatus.label}: {count}
-                          </Badge>
-                        ))}
                         {row.renameTimes > 0 && (
                           <Badge variant="secondary" className="text-xs">
                             命名: {row.renameTimes}
@@ -483,7 +492,7 @@ export function ProcessingContentPage() {
                           </span>
                           <span className="flex items-center gap-1">
                             <span className="text-muted-foreground/70">创建</span>
-                            <span>{row.createTime}</span>
+                            <span>{new Date(row.createdAt).toLocaleString()}</span>
                           </span>
                         </div>
 
@@ -560,6 +569,12 @@ export function ProcessingContentPage() {
             <DialogTitle>文件内容详情</DialogTitle>
           </DialogHeader>
           <div className="max-h-[70vh] space-y-3 overflow-auto">
+            {loadingFileContents && (
+              <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                加载中...
+              </div>
+            )}
             {fileContents.map((file, index) => (
               <Card key={file.fileDownloadPath || index}>
                 <CardContent className="p-4">
