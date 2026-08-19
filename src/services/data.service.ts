@@ -139,18 +139,18 @@ export interface FileContent {
 
 export interface Processor {
   name: string
-  category: string
+  category: string | null
   tags: string[]
   enabled: boolean
-  runtime: ProcessorRuntime
-  errorMessage: string
+  runtime: ProcessorRuntime | null
+  errorMessage: string | null
 }
 
 export interface ProcessorRuntime {
   createdAt: string
-  lastStartProcessTime: string
-  lastEndProcessTime: string
-  lastProcessFailedMessage: string
+  lastStartProcessTime: string | null
+  lastEndProcessTime: string | null
+  lastProcessFailedMessage: string | null
 }
 
 export type ProcessorRunKind =

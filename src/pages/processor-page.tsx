@@ -7,6 +7,7 @@ import {
   Play,
   Plus,
   Power,
+  RefreshCw,
   Search,
   Zap,
 } from 'lucide-react'
@@ -31,8 +32,7 @@ import type { Processor } from '@/services/data.service'
 import { processorService } from '@/services/data.service'
 
 const relativeTimeFormatter = new Intl.RelativeTimeFormat('zh-CN', { numeric: 'auto' })
-
-function toRelativeDate(text?: string) {
+function toRelativeDate(text?: string | null) {
   if (!text) {
     return null
   }
@@ -72,6 +72,7 @@ export function ProcessorPage() {
   const [dryRunProcessor, setDryRunProcessor] = useState<string>()
   const [runsOpen, setRunsOpen] = useState(false)
   const [runsProcessor, setRunsProcessor] = useState<string>()
+  const [reloadingProcessor, setReloadingProcessor] = useState<string>()
 
   const fetchProcessors = async () => {
     setLoading(true)
@@ -96,10 +97,13 @@ export function ProcessorPage() {
   }, [processors, processNameFilter])
 
   const summary = useMemo(() => {
-    const enabledCount = processors.filter((item) => item.enabled).length
+    const enabledCount = processors.filter((item) => item.enabled && item.runtime).length
+    const unloadedCount = processors.filter(
+      (item) => item.enabled && !item.runtime && !item.errorMessage,
+    ).length
     const errorCount = processors.filter((item) => Boolean(item.errorMessage)).length
 
-    return { total: processors.length, enabled: enabledCount, error: errorCount }
+    return { total: processors.length, enabled: enabledCount, unloaded: unloadedCount, error: errorCount }
   }, [processors])
 
   const isInitialLoading = loading && processors.length === 0
@@ -115,8 +119,13 @@ export function ProcessorPage() {
   }
 
   const handleReload = async (name: string) => {
-    await processorService.reload(name)
-    await fetchProcessors()
+    setReloadingProcessor(name)
+    try {
+      await processorService.reload(name)
+      await fetchProcessors()
+    } finally {
+      setReloadingProcessor(undefined)
+    }
   }
 
   const handleTrigger = async (name: string) => {
@@ -162,6 +171,16 @@ export function ProcessorPage() {
               <span className="text-muted-foreground">启用</span>
               <span className="font-medium text-emerald-600 dark:text-emerald-400">{summary.enabled}</span>
             </div>
+            {summary.unloaded > 0 && (
+              <>
+                <div className="h-4 w-px bg-border" />
+                <div className="flex items-center gap-1.5">
+                  <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="text-muted-foreground">未加载</span>
+                  <span className="font-medium text-amber-600 dark:text-amber-400">{summary.unloaded}</span>
+                </div>
+              </>
+            )}
             {summary.error > 0 && (
               <>
                 <div className="h-4 w-px bg-border" />
@@ -228,6 +247,8 @@ export function ProcessorPage() {
           {filteredData.map((processor) => {
             const hasError = Boolean(processor.errorMessage)
             const runtime = processor.runtime
+            const isUnloaded = processor.enabled && !runtime && !hasError
+            const isReloading = reloadingProcessor === processor.name
             const times = [
               { label: '创建', value: runtime?.createdAt },
               { label: '开始', value: runtime?.lastStartProcessTime },
@@ -240,6 +261,8 @@ export function ProcessorPage() {
                 className={cn(
                   'group rounded-lg border bg-card transition-all hover:shadow-sm',
                   hasError && 'border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20',
+                  isUnloaded &&
+                    'border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20',
                 )}
               >
                 <div className="flex items-start gap-4 p-4">
@@ -249,12 +272,16 @@ export function ProcessorPage() {
                       'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
                       hasError
                         ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                        : processor.enabled
-                          ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                          : 'bg-muted text-muted-foreground',
+                        : isUnloaded
+                          ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+                          : processor.enabled
+                            ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                            : 'bg-muted text-muted-foreground',
                     )}
                   >
                     {hasError ? (
+                      <AlertCircle className="h-5 w-5" />
+                    ) : isUnloaded ? (
                       <AlertCircle className="h-5 w-5" />
                     ) : processor.enabled ? (
                       <CheckCircle2 className="h-5 w-5" />
@@ -324,9 +351,11 @@ export function ProcessorPage() {
                                 variant="ghost"
                                 size="sm"
                                 className="justify-start"
+                                disabled={isReloading}
                                 onClick={() => void handleReload(processor.name)}
                               >
-                                重载
+                                <RefreshCw className={cn('mr-2 h-3.5 w-3.5', isReloading && 'animate-spin')} />
+                                {isReloading ? '正在重载' : '重载'}
                               </Button>
                               <Button
                                 variant="ghost"
@@ -362,6 +391,21 @@ export function ProcessorPage() {
                     {hasError && (
                       <div className="mt-3 rounded-md bg-red-100/80 px-3 py-2 text-sm text-red-700 dark:bg-red-900/40 dark:text-red-300">
                         <span className="line-clamp-2">{processor.errorMessage}</span>
+                      </div>
+                    )}
+                    {isUnloaded && (
+                      <div className="mt-3 flex items-center justify-between gap-3 rounded-md bg-amber-100/80 px-3 py-2 text-sm text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                        <span>配置已保存，但运行时尚未创建</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 shrink-0 border-amber-300 bg-transparent px-2 text-xs hover:bg-amber-200/60 dark:border-amber-700 dark:hover:bg-amber-800/60"
+                          disabled={isReloading}
+                          onClick={() => void handleReload(processor.name)}
+                        >
+                          <RefreshCw className={cn('mr-1.5 h-3 w-3', isReloading && 'animate-spin')} />
+                          {isReloading ? '加载中' : '重新加载'}
+                        </Button>
                       </div>
                     )}
 
