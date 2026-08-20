@@ -205,20 +205,21 @@ export function ProcessingContentPage() {
   }, [debouncedTitleChange])
 
   useEffect(() => {
-    if (!bottomRef.current) {
+    const scrollContainer = bottomRef.current?.closest('main')
+    if (!scrollContainer) {
       return
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && hasMore && !isLoading && !loadError) {
-          void fetchData({ clear: false })
-        }
-      },
-      { rootMargin: '400px 0px', threshold: 0 },
-    )
-    observer.observe(bottomRef.current)
-    return () => observer.disconnect()
+    const loadNextPageNearBottom = () => {
+      const remainingScroll = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight
+      if (remainingScroll <= 400 && hasMore && !isLoading && !loadError) {
+        void fetchData({ clear: false })
+      }
+    }
+
+    scrollContainer.addEventListener('scroll', loadNextPageNearBottom, { passive: true })
+    loadNextPageNearBottom()
+    return () => scrollContainer.removeEventListener('scroll', loadNextPageNearBottom)
   }, [fetchData, hasMore, isLoading, loadError])
 
   const statusOptions = processingContentStatuses.map((item) => ({ label: item.label, value: item.value }))
