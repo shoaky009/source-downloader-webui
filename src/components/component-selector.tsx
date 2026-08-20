@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { MultiSelect, SingleSelect } from '@/components/shared/multi-select'
 import { componentService, type ComponentRootType } from '@/services/data.service'
@@ -16,29 +16,33 @@ export function ComponentSelector({
 }) {
   const [options, setOptions] = useState<{ label: string; value: string }[]>([])
 
-  const loadOptions = async () => {
-    if (options.length > 0) {
-      return
+  useEffect(() => {
+    let active = true
+    void componentService.query({ type }).then((components) => {
+      if (!active) {
+        return
+      }
+      setOptions(
+        components.map((component) => {
+          const componentId = component.typeName === component.name ? component.typeName : `${component.typeName}:${component.name}`
+          return { label: componentId, value: componentId }
+        }),
+      )
+    })
+    return () => {
+      active = false
     }
-    const components = await componentService.query({ type })
-    setOptions(
-      components.map((component) => {
-        const componentId = component.typeName === component.name ? component.typeName : `${component.typeName}:${component.name}`
-        return {
-          label: componentId,
-          value: componentId,
-        }
-      }),
-    )
-  }
+  }, [type])
 
-  return (
-    <div onClick={loadOptions}>
-      {multiple ? (
-        <MultiSelect options={options} value={Array.isArray(value) ? value : []} onChange={(next) => onChange(next)} placeholder="选择组件ID" />
-      ) : (
-        <SingleSelect options={options} value={typeof value === 'string' ? value : undefined} onChange={(next) => onChange(next)} placeholder="选择组件ID" />
-      )}
-    </div>
+  const displayOptions = useMemo(() => {
+    const selectedValues = Array.isArray(value) ? value : value ? [value] : []
+    const missingValues = selectedValues.filter((selected) => !options.some((option) => option.value === selected))
+    return [...options, ...missingValues.map((selected) => ({ label: selected, value: selected }))]
+  }, [options, value])
+
+  return multiple ? (
+    <MultiSelect options={displayOptions} value={Array.isArray(value) ? value : []} onChange={(next) => onChange(next)} placeholder="选择组件ID" />
+  ) : (
+    <SingleSelect options={displayOptions} value={typeof value === 'string' ? value : undefined} onChange={(next) => onChange(next)} placeholder="选择组件ID" />
   )
 }
