@@ -179,7 +179,7 @@ function toApiConfig(config: ProcessorConfig, original: Record<string, unknown>)
     enabled: config.enabled,
     'save-path': config.savePath,
     triggers: config.triggers,
-    source: config.source,
+    source: config.source ?? [],
     'item-file-resolver': config.itemFileResolver,
     downloader: config.downloader,
     'file-mover': config.fileMover,
