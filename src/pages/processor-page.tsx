@@ -66,6 +66,8 @@ export function ProcessorPage() {
   const [processors, setProcessors] = useState<Processor[]>([])
   const [processNameFilter, setProcessNameFilter] = useState('')
   const [creationFormOpen, setCreationFormOpen] = useState(false)
+  const [editingProcessor, setEditingProcessor] = useState<string>()
+
   const [stateJsonViewer, setStateJsonViewer] = useState(false)
   const [stateProcessor, setStateProcessor] = useState<string>()
   const [openDryRunForm, setOpenDryRunForm] = useState(false)
@@ -369,7 +371,7 @@ export function ProcessorPage() {
                                 variant="ghost"
                                 size="sm"
                                 className="justify-start"
-                                onClick={() => console.log('WIP编辑', processor)}
+                                onClick={() => setEditingProcessor(processor.name)}
                               >
                                 编辑
                               </Button>
@@ -460,6 +462,24 @@ export function ProcessorPage() {
           正在刷新...
         </div>
       )}
+
+      <Dialog open={editingProcessor != null} onOpenChange={(open) => !open && setEditingProcessor(undefined)}>
+        <DialogContent className="flex max-h-[90vh] max-w-5xl flex-col overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>编辑处理器</DialogTitle>
+            <DialogDescription>修改处理器配置并保存。</DialogDescription>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+            <ProcessorForm
+              processorName={editingProcessor}
+              onSaved={async () => {
+                setEditingProcessor(undefined)
+                await fetchProcessors()
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={runsOpen} onOpenChange={setRunsOpen}>
         <DialogContent className="max-w-6xl">

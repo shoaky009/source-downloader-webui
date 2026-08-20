@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { MultiSelect, SingleSelect } from '@/components/shared/multi-select'
-import { componentService } from '@/services/data.service'
+import { componentService, type ComponentRootType } from '@/services/data.service'
 
 export function ComponentSelector({
   type,
@@ -9,7 +9,7 @@ export function ComponentSelector({
   value,
   onChange,
 }: {
-  type: string
+  type: ComponentRootType
   multiple?: boolean
   value?: string | string[]
   onChange: (next: string | string[] | undefined) => void

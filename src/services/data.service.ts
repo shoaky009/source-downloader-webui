@@ -218,6 +218,30 @@ export type ProcessorRunEvent =
   | { type: 'itemCompleted'; runId: number; itemId: number; completedItems: number }
   | { type: 'finished'; runId: number; status: ProcessorRunStatus; finishedAt: string; failure?: string }
 
+export type ComponentRootType =
+  | 'trigger'
+  | 'source'
+  | 'downloader'
+  | 'item-file-resolver'
+  | 'file-mover'
+  | 'variable-provider'
+  | 'process-listener'
+  | 'source-item-filter'
+  | 'source-file-filter'
+  | 'item-content-filter'
+  | 'file-content-filter'
+  | 'file-tagger'
+  | 'variable-replacer'
+  | 'file-exists-detector'
+  | 'file-replacement-decider'
+  | 'trimmer'
+
+export interface ComponentQuery {
+  type?: ComponentRootType
+  typeName?: string
+  name?: string
+}
+
 export interface Component {
   type: string
   name: string
@@ -336,6 +360,10 @@ class ProcessorService {
   async query(): Promise<Processor[]> {
     return instance.get(`/api/processor`).then((res: AxiosResponse<Processor[]>) => res.data)
   }
+  async get(name: string): Promise<Record<string, unknown>> {
+    return instance.get(`/api/processor/${name}`).then((res: AxiosResponse<Record<string, unknown>>) => res.data)
+  }
+
 
   async create(data: unknown) {
     return instance.post(`/api/processor`, data, { alertMessage: '创建成功' })
@@ -424,8 +452,11 @@ class ProcessorService {
 }
 
 class ComponentService {
-  async query(query: Record<string, string>): Promise<Component[]> {
-    const params = new URLSearchParams(query)
+  async query(query: ComponentQuery = {}): Promise<Component[]> {
+    const params = new URLSearchParams()
+    if (query.type) params.set('type', query.type)
+    if (query.typeName) params.set('typeName', query.typeName)
+    if (query.name) params.set('name', query.name)
     const q = params.size === 0 ? '' : `?${params.toString()}`
     return instance.get(`/api/component${q}`).then((res: AxiosResponse<Component[]>) => res.data)
   }

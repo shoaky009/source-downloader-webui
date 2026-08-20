@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { ComponentSelector } from '@/components/component-selector'
 import { DynamicTag } from '@/components/dynamic-tag'
@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SingleSelect } from '@/components/shared/multi-select'
+import { processorService } from '@/services/data.service'
+
 
 interface ProcessorConfig {
   name?: string
@@ -83,18 +85,133 @@ const expressionOptions = [
   { label: 'SPEL', value: 'SPEL' },
 ]
 
-export function ProcessorForm() {
-  const [formValue, setFormValue] = useState<ProcessorConfig>({
-    enabled: true,
+const defaultProcessorConfig: ProcessorConfig = {
+  enabled: true,
+  options: {
+    supportWindowsPlatformPath: true,
+    saveProcessingContent: true,
+    pointerBatchMode: true,
+    touchItemDirectory: true,
+    deleteEmptyDirectory: true,
+    downloadOptions: {},
+  },
+}
+
+function fromApiConfig(config: Record<string, unknown>): ProcessorConfig {
+  const options = (config.options ?? {}) as Record<string, unknown>
+  return {
+    name: config.name as string | undefined,
+    triggers: config.triggers as string[] | undefined,
+    source: config.source as string | undefined,
+    itemFileResolver: config['item-file-resolver'] as string | undefined,
+    downloader: config.downloader as string | undefined,
+    fileMover: config['file-mover'] as string | undefined,
+    savePath: config['save-path'] as string | undefined,
+    enabled: config.enabled as boolean | undefined,
+    category: config.category as string | null | undefined,
+    tags: config.tags as string[] | undefined,
     options: {
-      supportWindowsPlatformPath: true,
-      saveProcessingContent: true,
-      pointerBatchMode: true,
-      touchItemDirectory: true,
-      deleteEmptyDirectory: true,
-      downloadOptions: {},
+      variableProviders: options['variable-providers'] as string[] | undefined,
+      sourceItemFilters: options['source-item-filters'] as string[] | undefined,
+      fileContentFilters: options['file-content-filters'] as string[] | undefined,
+      itemContentFilters: options['item-content-filters'] as string[] | undefined,
+      savePathPattern: options['save-path-pattern'] as string | undefined,
+      filenamePattern: options['filename-pattern'] as string | undefined,
+      processListeners: Array.isArray(options['process-listeners']) && options['process-listeners'].every((item) => typeof item === 'string') ? options['process-listeners'] : undefined,
+      renameTaskInterval: options['rename-task-interval'] as string | undefined,
+      downloadOptions: (options['download-options'] ?? {}) as DownloadOptions,
+      variableConflictStrategy: options['variable-conflict-strategy'] as string | undefined,
+      renameTimesThreshold: options['rename-times-threshold'] as number | undefined,
+      saveProcessingContent: options['save-processing-content'] as boolean | undefined,
+      itemExpressionExclusions: options['item-expression-exclusions'] as string[] | undefined,
+      itemExpressionInclusions: options['item-expression-inclusions'] as string[] | undefined,
+      contentExpressionExclusions: options['content-expression-exclusions'] as string[] | undefined,
+      contentExpressionInclusions: options['content-expression-inclusions'] as string[] | undefined,
+      fileExpressionExclusions: options['file-content-expression-exclusions'] as string[] | undefined,
+      fileExpressionInclusions: options['file-content-expression-inclusions'] as string[] | undefined,
+      variableErrorStrategy: options['variable-error-strategy'] as string | undefined,
+      touchItemDirectory: options['touch-item-directory'] as boolean | undefined,
+      deleteEmptyDirectory: options['delete-empty-directory'] as boolean | undefined,
+      fileTaggers: options['file-taggers'] as string[] | undefined,
+      variableReplacers: options['variable-replacers'] as string[] | undefined,
+      supportWindowsPlatformPath: options['support-windows-platform-path'] as boolean | undefined,
+      fileReplacementDecider: options['file-replacement-decider'] as string | undefined,
+      fileExistsDetector: options['file-exists-detector'] as string | undefined,
+      fetchLimit: options['fetch-limit'] as number | undefined,
+      pointerBatchMode: options['pointer-batch-mode'] as boolean | undefined,
+      itemErrorContinue: options['item-error-continue'] as boolean | undefined,
+      parallelism: options.parallelism as number | undefined,
+      retryBackoffMills: options['retry-backoff-mills'] as number | undefined,
+      taskGroup: options['task-group'] as string | undefined,
+      expression: options.expression as string | undefined,
     },
-  })
+  }
+}
+
+function toApiConfig(config: ProcessorConfig, original: Record<string, unknown>): Record<string, unknown> {
+  const originalOptions = (original.options ?? {}) as Record<string, unknown>
+  const options: Record<string, unknown> = { ...originalOptions }
+  const optionKeys: Array<[keyof Options, string]> = [
+    ['variableProviders', 'variable-providers'], ['sourceItemFilters', 'source-item-filters'],
+    ['fileContentFilters', 'file-content-filters'], ['itemContentFilters', 'item-content-filters'],
+    ['savePathPattern', 'save-path-pattern'], ['filenamePattern', 'filename-pattern'],
+    ['processListeners', 'process-listeners'], ['renameTaskInterval', 'rename-task-interval'],
+    ['variableConflictStrategy', 'variable-conflict-strategy'], ['renameTimesThreshold', 'rename-times-threshold'],
+    ['saveProcessingContent', 'save-processing-content'], ['itemExpressionExclusions', 'item-expression-exclusions'],
+    ['itemExpressionInclusions', 'item-expression-inclusions'], ['contentExpressionExclusions', 'content-expression-exclusions'],
+    ['contentExpressionInclusions', 'content-expression-inclusions'], ['fileExpressionExclusions', 'file-content-expression-exclusions'],
+    ['fileExpressionInclusions', 'file-content-expression-inclusions'], ['variableErrorStrategy', 'variable-error-strategy'],
+    ['touchItemDirectory', 'touch-item-directory'], ['deleteEmptyDirectory', 'delete-empty-directory'],
+    ['fileTaggers', 'file-taggers'], ['variableReplacers', 'variable-replacers'],
+    ['supportWindowsPlatformPath', 'support-windows-platform-path'], ['fileReplacementDecider', 'file-replacement-decider'],
+    ['fileExistsDetector', 'file-exists-detector'], ['fetchLimit', 'fetch-limit'], ['pointerBatchMode', 'pointer-batch-mode'],
+    ['itemErrorContinue', 'item-error-continue'], ['parallelism', 'parallelism'], ['retryBackoffMills', 'retry-backoff-mills'],
+    ['taskGroup', 'task-group'], ['expression', 'expression'],
+  ]
+  for (const [formKey, apiKey] of optionKeys) {
+    if (config.options[formKey] !== undefined) options[apiKey] = config.options[formKey]
+  }
+  options['download-options'] = config.options.downloadOptions
+
+  return {
+    ...original,
+    name: config.name,
+    enabled: config.enabled,
+    'save-path': config.savePath,
+    triggers: config.triggers,
+    source: config.source,
+    'item-file-resolver': config.itemFileResolver,
+    downloader: config.downloader,
+    'file-mover': config.fileMover,
+    category: config.category,
+    tags: config.tags,
+    options,
+  }
+}
+
+export function ProcessorForm({ processorName, onSaved }: { processorName?: string; onSaved?: () => void | Promise<void> }) {
+  const [formValue, setFormValue] = useState<ProcessorConfig>(defaultProcessorConfig)
+  const [loading, setLoading] = useState(Boolean(processorName))
+  const [submitting, setSubmitting] = useState(false)
+  const [originalConfig, setOriginalConfig] = useState<Record<string, unknown>>({})
+
+
+  useEffect(() => {
+    if (!processorName) {
+      setFormValue(defaultProcessorConfig)
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    void processorService
+      .get(processorName)
+      .then((config) => {
+        setOriginalConfig(config)
+        setFormValue(fromApiConfig(config))
+      })
+      .finally(() => setLoading(false))
+  }, [processorName])
 
   const updateRoot = <K extends keyof ProcessorConfig>(key: K, value: ProcessorConfig[K]) => {
     setFormValue((current) => ({ ...current, [key]: value }))
@@ -106,6 +223,24 @@ export function ProcessorForm() {
 
   const updateDownloadOptions = <K extends keyof DownloadOptions>(key: K, value: DownloadOptions[K]) => {
     setFormValue((current) => ({ ...current, options: { ...current.options, downloadOptions: { ...current.options.downloadOptions, [key]: value } } }))
+  }
+
+  const handleSubmit = async () => {
+    setSubmitting(true)
+    try {
+      if (processorName) {
+        await processorService.update(processorName, toApiConfig(formValue, originalConfig))
+      } else {
+        await processorService.create(toApiConfig(formValue, {}))
+      }
+      await onSaved?.()
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (loading) {
+    return <div className="py-8 text-center text-sm text-muted-foreground">加载中...</div>
   }
 
   return (
@@ -131,13 +266,13 @@ export function ProcessorForm() {
             <ComponentSelector type="trigger" multiple value={formValue.triggers ?? []} onChange={(next) => updateRoot('triggers', Array.isArray(next) ? next : [])} />
           </FormRow>
           <FormRow label="文件解析器" required>
-            <ComponentSelector type="itemFileResolver" value={formValue.itemFileResolver} onChange={(next) => updateRoot('itemFileResolver', typeof next === 'string' ? next : undefined)} />
+            <ComponentSelector type="item-file-resolver" value={formValue.itemFileResolver} onChange={(next) => updateRoot('itemFileResolver', typeof next === 'string' ? next : undefined)} />
           </FormRow>
           <FormRow label="下载器" required>
             <ComponentSelector type="downloader" value={formValue.downloader} onChange={(next) => updateRoot('downloader', typeof next === 'string' ? next : undefined)} />
           </FormRow>
           <FormRow label="移动器" required>
-            <ComponentSelector type="fileMover" value={formValue.fileMover} onChange={(next) => updateRoot('fileMover', typeof next === 'string' ? next : undefined)} />
+            <ComponentSelector type="file-mover" value={formValue.fileMover} onChange={(next) => updateRoot('fileMover', typeof next === 'string' ? next : undefined)} />
           </FormRow>
           <FormRow label="保存路径" required>
             <Input value={formValue.savePath ?? ''} onChange={(event) => updateRoot('savePath', event.target.value)} />
@@ -161,13 +296,13 @@ export function ProcessorForm() {
             <Input value={String(formValue.options.filenamePattern ?? '')} onChange={(event) => updateOptions('filenamePattern', event.target.value)} />
           </FormRow>
           <FormRow label="文件标签器">
-            <ComponentSelector type="tagger" multiple value={formValue.options.fileTaggers ?? []} onChange={(next) => updateOptions('fileTaggers', Array.isArray(next) ? next : [])} />
+            <ComponentSelector type="file-tagger" multiple value={formValue.options.fileTaggers ?? []} onChange={(next) => updateOptions('fileTaggers', Array.isArray(next) ? next : [])} />
           </FormRow>
           <FormRow label="变量提供">
-            <ComponentSelector type="variableProvider" multiple value={formValue.options.variableProviders ?? []} onChange={(next) => updateOptions('variableProviders', Array.isArray(next) ? next : [])} />
+            <ComponentSelector type="variable-provider" multiple value={formValue.options.variableProviders ?? []} onChange={(next) => updateOptions('variableProviders', Array.isArray(next) ? next : [])} />
           </FormRow>
           <FormRow label="变量替换">
-            <ComponentSelector type="variableReplacer" multiple value={formValue.options.variableReplacers ?? []} onChange={(next) => updateOptions('variableReplacers', Array.isArray(next) ? next : [])} />
+            <ComponentSelector type="variable-replacer" multiple value={formValue.options.variableReplacers ?? []} onChange={(next) => updateOptions('variableReplacers', Array.isArray(next) ? next : [])} />
           </FormRow>
           <FormRow label="变量错误策略">
             <SingleSelect options={variableErrorStrategyOptions} value={formValue.options.variableErrorStrategy} onChange={(next) => updateOptions('variableErrorStrategy', next)} placeholder="Select" />
@@ -176,10 +311,10 @@ export function ProcessorForm() {
             <SingleSelect options={variableConflictStrategyOptions} value={formValue.options.variableConflictStrategy} onChange={(next) => updateOptions('variableConflictStrategy', next)} placeholder="Select" />
           </FormRow>
           <FormRow label="文件存在">
-            <ComponentSelector type="fileExistsDetector" value={formValue.options.fileExistsDetector} onChange={(next) => updateOptions('fileExistsDetector', typeof next === 'string' ? next : undefined)} />
+            <ComponentSelector type="file-exists-detector" value={formValue.options.fileExistsDetector} onChange={(next) => updateOptions('fileExistsDetector', typeof next === 'string' ? next : undefined)} />
           </FormRow>
           <FormRow label="文件替换">
-            <ComponentSelector type="fileReplacementDecider" value={formValue.options.fileReplacementDecider} onChange={(next) => updateOptions('fileReplacementDecider', typeof next === 'string' ? next : undefined)} />
+            <ComponentSelector type="file-replacement-decider" value={formValue.options.fileReplacementDecider} onChange={(next) => updateOptions('fileReplacementDecider', typeof next === 'string' ? next : undefined)} />
           </FormRow>
           <FormRow label="Windows路径字符替换">
             <Switch checked={Boolean(formValue.options.supportWindowsPlatformPath)} onCheckedChange={(checked) => updateOptions('supportWindowsPlatformPath', checked)} />
@@ -188,13 +323,13 @@ export function ProcessorForm() {
 
         <TabsContent value="filter" className="grid gap-4">
           <FormRow label="条目过滤">
-            <ComponentSelector type="sourceItemFilter" multiple value={formValue.options.sourceItemFilters ?? []} onChange={(next) => updateOptions('sourceItemFilters', Array.isArray(next) ? next : [])} />
+            <ComponentSelector type="source-item-filter" multiple value={formValue.options.sourceItemFilters ?? []} onChange={(next) => updateOptions('sourceItemFilters', Array.isArray(next) ? next : [])} />
           </FormRow>
           <FormRow label="文件过滤">
-            <ComponentSelector type="fileContentFilter" multiple value={formValue.options.fileContentFilters ?? []} onChange={(next) => updateOptions('fileContentFilters', Array.isArray(next) ? next : [])} />
+            <ComponentSelector type="file-content-filter" multiple value={formValue.options.fileContentFilters ?? []} onChange={(next) => updateOptions('fileContentFilters', Array.isArray(next) ? next : [])} />
           </FormRow>
           <FormRow label="条目内容过滤">
-            <ComponentSelector type="itemContentFilter" multiple value={formValue.options.itemContentFilters ?? []} onChange={(next) => updateOptions('itemContentFilters', Array.isArray(next) ? next : [])} />
+            <ComponentSelector type="item-content-filter" multiple value={formValue.options.itemContentFilters ?? []} onChange={(next) => updateOptions('itemContentFilters', Array.isArray(next) ? next : [])} />
           </FormRow>
           <FormRow label="条目表达式排除" />
           <FormRow label="条目表达式包含" />
@@ -260,8 +395,8 @@ export function ProcessorForm() {
         </TabsContent>
       </Tabs>
 
-      <Button type="button" onClick={() => console.log('提交数据', formValue)}>
-        确定
+      <Button type="button" disabled={submitting} onClick={() => void handleSubmit()}>
+        {submitting ? '保存中...' : '确定'}
       </Button>
     </div>
   )
