@@ -1,13 +1,24 @@
-import { AlertCircle, ChevronDown, ChevronRight, Layers, Plus, RefreshCw, Search } from 'lucide-react'
+import { AlertCircle, ChevronDown, ChevronRight, Layers, MoreHorizontal, Plus, RefreshCw, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { ComponentForm } from '@/components/component-form'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { Component } from '@/services/data.service'
 import { componentService } from '@/services/data.service'
 
@@ -78,6 +89,8 @@ export function ComponentPage() {
   const [loading, setLoading] = useState(false)
   const [components, setComponents] = useState<Component[]>([])
   const [creationFormOpen, setCreationFormOpen] = useState(false)
+  const [editingComponent, setEditingComponent] = useState<Component>()
+  const [deletingComponent, setDeletingComponent] = useState<Component>()
   const [expandedRows, setExpandedRows] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -211,19 +224,47 @@ export function ComponentPage() {
                           </div>
 
                           {/* 操作按钮 */}
-                          <div className="flex shrink-0 items-center gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 px-2"
-                              onClick={async () => {
-                                await componentService.reload(component)
-                                await fetchComponents()
-                              }}
-                            >
-                              <RefreshCw className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent align="end" className="w-44 p-1.5">
+                              <div className="grid gap-0.5">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="justify-start"
+                                  onClick={async () => {
+                                    await componentService.reload(component)
+                                    await fetchComponents()
+                                  }}
+                                >
+                                  <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                                  重载
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="justify-start"
+                                  disabled={!component.modifiable}
+                                  onClick={() => setEditingComponent(component)}
+                                >
+                                  编辑
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="justify-start text-destructive hover:text-destructive"
+                                  disabled={!component.modifiable}
+                                  onClick={() => setDeletingComponent(component)}
+                                >
+                                  删除
+                                </Button>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         </div>
 
                         {/* 引用标签 */}
@@ -292,13 +333,61 @@ export function ComponentPage() {
         </div>
       )}
 
+      <AlertDialog open={deletingComponent != null} onOpenChange={(open) => !open && setDeletingComponent(undefined)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除组件？</AlertDialogTitle>
+            <AlertDialogDescription>
+              确定要删除组件“{deletingComponent?.name || deletingComponent?.typeName}”吗？此操作不可撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (!deletingComponent) return
+                await componentService.delete(deletingComponent)
+                setDeletingComponent(undefined)
+                await fetchComponents()
+              }}
+            >
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={editingComponent != null} onOpenChange={(open) => !open && setEditingComponent(undefined)}>
+        <DialogContent className="flex max-h-[90vh] max-w-5xl flex-col overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>编辑组件</DialogTitle>
+            <DialogDescription>修改组件属性并保存。</DialogDescription>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+            <ComponentForm
+              component={editingComponent}
+              onSaved={async () => {
+                setEditingComponent(undefined)
+                await fetchComponents()
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={creationFormOpen} onOpenChange={setCreationFormOpen}>
         <DialogContent className="max-h-[85vh] max-w-5xl overflow-y-auto">
           <DialogHeader className="sr-only">
             <DialogTitle>新建组件</DialogTitle>
             <DialogDescription>选择组件类型并填写组件属性，创建新的组件配置。</DialogDescription>
           </DialogHeader>
-          <ComponentForm />
+          <ComponentForm
+            onSaved={async () => {
+              setCreationFormOpen(false)
+              await fetchComponents()
+            }}
+          />
         </DialogContent>
       </Dialog>
     </div>

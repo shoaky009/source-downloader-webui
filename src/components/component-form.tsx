@@ -1,65 +1,82 @@
 import Form from '@rjsf/shadcn'
 import validator from '@rjsf/validator-ajv8'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { KeyValueField } from '@/components/jsonschema/key-value-field'
 import { FormRow } from '@/components/shared/form-row'
 import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
-import { componentService } from '@/services/data.service'
-
-interface ComponentType {
-  type: string
-  typeName: string
-}
+import { componentService, type Component, type ComponentRootType, type ComponentTypeDescriptor } from '@/services/data.service'
 
 interface ComponentFormValue {
   name?: string
   props?: Record<string, unknown>
-  type?: string
+  type?: ComponentRootType
   typeName?: string
 }
 
-const componentTypes = [
-  { label: '触发器(TRIGGER)', value: 'TRIGGER' },
-  { label: '数据源(SOURCE)', value: 'SOURCE' },
-  { label: '下载器(DOWNLOADER)', value: 'DOWNLOADER' },
-  { label: '条目文件解析(ITEM_FILE_RESOLVER)', value: 'ITEM_FILE_RESOLVER' },
-  { label: '文件移动器(FILE_MOVER)', value: 'FILE_MOVER' },
-  { label: '条目过滤(SOURCE_ITEM_FILTER)', value: 'SOURCE_ITEM_FILTER' },
-  { label: '条目内容过滤(ITEM_CONTENT_FILTER)', value: 'ITEM_CONTENT_FILTER' },
-  { label: '文件内容过滤(FILE_CONTENT_FILTER)', value: 'FILE_CONTENT_FILTER' },
-  { label: '标签器(TAGGER)', value: 'TAGGER' },
-  { label: '文件替换规则(FILE_REPLACEMENT_DECIDER)', value: 'FILE_REPLACEMENT_DECIDER' },
-  { label: '文件检测规则(FILE_EXISTS_DETECTOR)', value: 'FILE_EXISTS_DETECTOR' },
-  { label: '变量提供(VARIABLE_PROVIDER)', value: 'VARIABLE_PROVIDER' },
-  { label: '变量替换(VARIABLE_REPLACER)', value: 'VARIABLE_REPLACER' },
-  { label: '处理监听(PROCESS_LISTENER)', value: 'PROCESS_LISTENER' },
+const componentTypes: { label: string; value: ComponentRootType }[] = [
+  { label: '触发器(Trigger)', value: 'trigger' },
+  { label: '数据源(Source)', value: 'source' },
+  { label: '下载器(Downloader)', value: 'downloader' },
+  { label: '条目文件解析(ItemFileResolver)', value: 'item-file-resolver' },
+  { label: '文件移动器(FileMover)', value: 'file-mover' },
+  { label: '变量提供(VariableProvider)', value: 'variable-provider' },
+  { label: '处理监听(ProcessListener)', value: 'process-listener' },
+  { label: '条目过滤(SourceItemFilter)', value: 'source-item-filter' },
+  { label: '源文件过滤(SourceFileFilter)', value: 'source-file-filter' },
+  { label: '条目内容过滤(ItemContentFilter)', value: 'item-content-filter' },
+  { label: '文件内容过滤(FileContentFilter)', value: 'file-content-filter' },
+  { label: '文件标签器(FileTagger)', value: 'file-tagger' },
+  { label: '文件替换规则(FileReplacementDecider)', value: 'file-replacement-decider' },
+  { label: '文件检测规则(FileExistsDetector)', value: 'file-exists-detector' },
+  { label: '变量替换(VariableReplacer)', value: 'variable-replacer' },
+  { label: '裁剪器(Trimmer)', value: 'trimmer' },
 ]
 
-export function ComponentForm() {
-  const [formData, setFormData] = useState<ComponentFormValue>({})
+export function ComponentForm({ component, onSaved }: { component?: Component; onSaved?: () => void | Promise<void> }) {
+  const [formData, setFormData] = useState<ComponentFormValue>(() =>
+    component
+      ? { type: component.type, typeName: component.typeName, name: component.name, props: component.props }
+      : {},
+  )
   const [schema, setSchema] = useState<Record<string, any>>({})
   const [uiSchema, setUiSchema] = useState<Record<string, any>>({})
-  const [currentTypeComponentOptions, setCurrentTypeComponentOptions] = useState<ComponentType[]>([])
+  const [currentTypeComponentOptions, setCurrentTypeComponentOptions] = useState<ComponentTypeDescriptor[]>([])
+  const [submitting, setSubmitting] = useState(false)
 
   const componentTypeOptions = useMemo(() => componentTypes, [])
   const typeNameOptions = useMemo(
-    () => currentTypeComponentOptions.map((item) => ({ label: item.typeName, value: item.typeName })),
+    () => currentTypeComponentOptions.map((item) => ({ label: item.name, value: item.name })),
     [currentTypeComponentOptions],
   )
 
+  useEffect(() => {
+    if (!component) {
+      return
+    }
+    void Promise.all([
+      componentService.types({ type: component.type }),
+      componentService.getComponentPropSchema(component.type, component.typeName),
+    ]).then(([types, metadata]) => {
+      setCurrentTypeComponentOptions(types)
+      setSchema(metadata.propsJsonSchema ?? {})
+      setUiSchema(metadata.propsUiSchema ?? {})
+    })
+  }, [component])
+
   const handleTypeSelected = async (type?: string) => {
-    setFormData((current) => ({ ...current, type, typeName: undefined, props: undefined }))
+    const rootType = type as ComponentRootType | undefined
+    setFormData((current) => ({ ...current, type: rootType, typeName: undefined, props: undefined }))
     setSchema({})
     setUiSchema({})
-    if (!type) {
+    if (!rootType) {
       setCurrentTypeComponentOptions([])
       return
     }
-    const types = await componentService.types({ type })
-    setCurrentTypeComponentOptions(types.data)
+    const types = await componentService.types({ type: rootType })
+    setCurrentTypeComponentOptions(types)
   }
 
   const handleTypeNameSelected = async (typeName?: string) => {
@@ -67,13 +84,13 @@ export function ComponentForm() {
     if (!typeName || !formData.type) {
       return
     }
-    const response = await componentService.getComponentPropSchema(formData.type, typeName)
-    if (!response.data.propertySchema) {
+    const metadata = await componentService.getComponentPropSchema(formData.type, typeName)
+    if (!metadata.propsJsonSchema) {
       setSchema({})
       setUiSchema({})
       return
     }
-    const nextSchema = response.data.propertySchema
+    const nextSchema = metadata.propsJsonSchema
     setSchema(nextSchema)
 
     const resultSet: Record<string, { 'ui:field': string }> = {}
@@ -86,19 +103,41 @@ export function ComponentForm() {
 
     const merged = {
       ...resultSet,
-      ...Object.keys(response.data.uiSchema ?? {}).reduce<Record<string, any>>((acc, key) => {
-        acc[key] = { ...resultSet[key], ...response.data.uiSchema[key] }
+      ...Object.keys(metadata.propsUiSchema ?? {}).reduce<Record<string, any>>((acc, key) => {
+        acc[key] = { ...resultSet[key], ...metadata.propsUiSchema?.[key] }
         return acc
       }, {}),
     }
     setUiSchema(merged)
   }
 
+  const handleSubmit = async () => {
+    if (!formData.type || !formData.typeName) {
+      return
+    }
+    setSubmitting(true)
+    try {
+      if (component) {
+        await componentService.update(component, formData.props ?? {})
+      } else {
+        await componentService.create({
+          type: formData.type,
+          typeName: formData.typeName,
+          name: formData.name ?? '',
+          props: formData.props ?? {},
+        })
+      }
+      await onSaved?.()
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold">新建组件</h2>
-        <p className="text-sm text-muted-foreground">先选择组件类型和类型名称，再按需填写组件属性。</p>
+        <h2 className="text-lg font-semibold">{component ? '编辑组件' : '新建组件'}</h2>
+        <p className="text-sm text-muted-foreground">{component ? '修改组件属性并保存。' : '先选择组件类型和类型名称，再按需填写组件属性。'}</p>
       </div>
       <div className="grid gap-4">
         <FormRow label="组件类型" required>
@@ -107,6 +146,7 @@ export function ComponentForm() {
             value={formData.type}
             onChange={handleTypeSelected}
             placeholder="选择组件类型"
+            disabled={Boolean(component)}
           />
         </FormRow>
         <FormRow label="组件类型名称" required>
@@ -115,11 +155,11 @@ export function ComponentForm() {
             value={formData.typeName}
             onChange={handleTypeNameSelected}
             placeholder="先选择组件类型"
-            disabled={!formData.type}
+            disabled={Boolean(component) || !formData.type}
           />
         </FormRow>
         <FormRow label="组件名称">
-          <Input value={formData.name ?? ''} onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))} />
+          <Input disabled={Boolean(component)} value={formData.name ?? ''} onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))} />
         </FormRow>
         <FormRow label="组件属性">
           {Object.keys(schema).length > 0 ? (
@@ -137,8 +177,8 @@ export function ComponentForm() {
           )}
         </FormRow>
       </div>
-      <Button type="button" onClick={() => console.log('提交数据', formData)}>
-        确定
+      <Button type="button" disabled={!formData.type || !formData.typeName || submitting} onClick={handleSubmit}>
+        {submitting ? '保存中...' : '确定'}
       </Button>
     </div>
   )

@@ -236,20 +236,39 @@ export type ComponentRootType =
   | 'file-replacement-decider'
   | 'trimmer'
 
+export interface ComponentTypeDescriptor {
+  type: ComponentRootType
+  name: string
+}
+
+export interface ComponentMetadata {
+  propsJsonSchema: Record<string, any> | null
+  propsUiSchema: Record<string, any> | null
+}
+
+
 export interface ComponentQuery {
   type?: ComponentRootType
   typeName?: string
   name?: string
 }
+export interface ComponentCreateInput {
+  type: ComponentRootType
+  typeName: string
+  name: string
+  props: Record<string, unknown>
+}
+
 
 export interface Component {
-  type: string
+  type: ComponentRootType
   name: string
   typeName: string
   props: Record<string, unknown>
   stateDetail: unknown
   primary: boolean
-  errorMessage: string
+  modifiable: boolean
+  errorMessage: string | null
   refs?: string[]
 }
 
@@ -461,26 +480,35 @@ class ComponentService {
     return instance.get(`/api/component${q}`).then((res: AxiosResponse<Component[]>) => res.data)
   }
 
-  async create(data: Component) {
+  async create(data: ComponentCreateInput) {
     return instance.post(`/api/component`, data, { alertMessage: '创建成功' })
   }
 
-  async delete(name: string) {
-    return instance.delete(`/api/component/${name}`, { alertMessage: '删除成功' })
+  async update(component: Component, props: Record<string, unknown>) {
+    const identity = [component.type, component.typeName, component.name].map(encodeURIComponent).join('/')
+    return instance.put(`/api/component/${identity}`, props, { alertMessage: '保存成功' })
+  }
+
+  async delete(component: Component) {
+    const identity = [component.type, component.typeName, component.name].map(encodeURIComponent).join('/')
+    return instance.delete(`/api/component/${identity}`, { alertMessage: '删除成功' })
   }
 
   async reload(component: Component) {
     return instance.post(`/api/component/${component.type}/${component.typeName}/${component.name}/reload`, null, { alertMessage: '重载成功' })
   }
 
-  async types(query: Record<string, string>) {
-    const params = new URLSearchParams(query)
+  async types(query: { type?: ComponentRootType } = {}): Promise<ComponentTypeDescriptor[]> {
+    const params = new URLSearchParams()
+    if (query.type) params.set('type', query.type)
     const q = params.size === 0 ? '' : `?${params.toString()}`
-    return instance.get(`/api/component/types${q}`)
+    return instance.get(`/api/component/types${q}`).then((res: AxiosResponse<ComponentTypeDescriptor[]>) => res.data)
   }
 
-  async getComponentPropSchema(type: string, typeName: string) {
-    return instance.get(`/api/component/${type}/${typeName}/metadata`)
+  async getComponentPropSchema(type: ComponentRootType, typeName: string): Promise<ComponentMetadata> {
+    return instance
+      .get(`/api/component/${type}/${typeName}/metadata`)
+      .then((res: AxiosResponse<ComponentMetadata>) => res.data)
   }
 
   stateStream(ids: string[], onEvent: (event: MessageEvent<string>) => void) {
