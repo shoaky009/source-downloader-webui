@@ -3,6 +3,7 @@ import { Toaster } from 'sonner'
 
 import { AppLayout } from '@/components/layouts/app-layout'
 import { ComponentPage } from '@/pages/component-page'
+import { InstancePage } from '@/pages/instance-page'
 import { ProcessingContentPage } from '@/pages/processing-content-page'
 import { ProcessorPage } from '@/pages/processor-page'
 import { SettingPage } from '@/pages/setting-page'
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/processor" replace />} />
           <Route path="/processor" element={<ProcessorPage />} />
           <Route path="/component" element={<ComponentPage />} />
+          <Route path="/instance" element={<InstancePage />} />
           <Route path="/processing-content" element={<ProcessingContentPage />} />
           <Route path="/setting" element={<SettingPage />} />
         </Routes>

@@ -3,6 +3,7 @@ import validator from '@rjsf/validator-ajv8'
 import { useEffect, useMemo, useState } from 'react'
 
 import { KeyValueField } from '@/components/jsonschema/key-value-field'
+import { InstanceField } from '@/components/jsonschema/instance-field'
 import { FormRow } from '@/components/shared/form-row'
 import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
@@ -169,7 +170,7 @@ export function ComponentForm({ component, onSaved }: { component?: Component; o
               formData={formData.props}
               validator={validator}
               templates={{ ButtonTemplates: { SubmitButton: () => null } }}
-              fields={{ keyValueField: KeyValueField }}
+              fields={{ keyValueField: KeyValueField, instanceField: InstanceField }}
               onChange={(event) => setFormData((current) => ({ ...current, props: event.formData as Record<string, unknown> }))}
             />
           ) : (

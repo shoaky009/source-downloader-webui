@@ -272,6 +272,26 @@ export interface Component {
   refs?: string[]
 }
 
+export interface InstanceConfig {
+  name: string
+  type: string
+  props: Record<string, unknown>
+  loaded: boolean
+}
+
+export interface InstanceFactoryMetadata {
+  description: string
+  propsJsonSchema?: Record<string, unknown>
+  propsUiSchema?: Record<string, unknown>
+}
+
+export interface InstanceCapability {
+  type: string
+  simpleName: string
+  description?: string
+  metadata?: InstanceFactoryMetadata
+}
+
 export interface ConfigAssistantQuestionOption {
   label: string
   value: string
@@ -518,6 +538,36 @@ class ComponentService {
   }
 }
 
+class InstanceService {
+  async query(): Promise<InstanceConfig[]> {
+    return instance.get('/api/instance').then((response: AxiosResponse<InstanceConfig[]>) => response.data)
+  }
+
+  async create(data: Omit<InstanceConfig, 'loaded'>) {
+    return instance.post('/api/instance', data, { alertMessage: '创建成功' })
+  }
+
+  async update(name: string, data: Pick<InstanceConfig, 'type' | 'props'>) {
+    return instance.put(`/api/instance/${encodeURIComponent(name)}`, data, { alertMessage: '保存成功' })
+  }
+
+  async delete(name: string) {
+    return instance.delete(`/api/instance/${encodeURIComponent(name)}`, { alertMessage: '删除成功' })
+  }
+
+  async capabilities(): Promise<InstanceCapability[]> {
+    return instance
+      .get('/api/metadata/instance-capabilities')
+      .then((response: AxiosResponse<InstanceCapability[]>) => response.data)
+  }
+
+  async capability(type: string): Promise<InstanceCapability> {
+    return instance
+      .get(`/api/metadata/instance-capabilities/${encodeURIComponent(type)}`)
+      .then((response: AxiosResponse<InstanceCapability>) => response.data)
+  }
+}
+
 class AiAssistantService {
   async draft(payload: AiDraftRequest): Promise<AssistantNextActionResponse> {
     return instance
@@ -616,6 +666,7 @@ export function fileStatusGrouping(fileContents: FileContent[]): Map<TaggableSta
 export const processingContentService = new ProcessingContentService()
 export const processorService = new ProcessorService()
 export const componentService = new ComponentService()
+export const instanceService = new InstanceService()
 export const aiAssistantService = new AiAssistantService()
 export const applicationService = new ApplicationService()
 export const actuatorService = new ActuatorService()
