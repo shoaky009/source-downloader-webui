@@ -1,5 +1,5 @@
 import debounce from 'lodash/debounce'
-import { AlertCircle, Calendar, CheckSquare, FileText, Hash, RefreshCw, Search, Square, Trash2 } from 'lucide-react'
+import { AlertCircle, Calendar, CheckSquare, FileText, Hash, Pencil, RefreshCw, Search, Square, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Card, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import {
   type FileContent,
@@ -65,6 +65,9 @@ export function ProcessingContentPage() {
     type: 'reprocess' | 'delete'
     rows: ProcessingContentSummary[]
   } | null>(null)
+  const [editingRenameTimes, setEditingRenameTimes] = useState<ProcessingContentSummary>()
+  const [renameTimesInput, setRenameTimesInput] = useState('')
+  const [savingRenameTimes, setSavingRenameTimes] = useState(false)
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const requestIdRef = useRef(0)
   const filtersRef = useRef<QueryFilters>({
@@ -267,6 +270,43 @@ export function ProcessingContentPage() {
       setLoadingFileContentId(undefined)
     }
   }
+  const openRenameTimesEditor = (row: ProcessingContentSummary) => {
+    setEditingRenameTimes(row)
+    setRenameTimesInput(String(row.renameTimes))
+  }
+
+  const saveRenameTimes = async () => {
+    if (!editingRenameTimes) {
+      return
+    }
+    const renameTimes = Number(renameTimesInput)
+    if (!Number.isSafeInteger(renameTimes) || renameTimes < 0) {
+      toast.error('命名次数必须是非负整数')
+      return
+    }
+
+    setSavingRenameTimes(true)
+    try {
+      const updated = await processingContentService.update(editingRenameTimes.id, { renameTimes })
+      setItemContents((current) =>
+        current.map((item) =>
+          item.id === updated.id
+            ? { ...item, renameTimes: updated.renameTimes, updatedAt: updated.updatedAt }
+            : item,
+        ),
+      )
+      setSelectedRows((current) =>
+        current.map((item) =>
+          item.id === updated.id
+            ? { ...item, renameTimes: updated.renameTimes, updatedAt: updated.updatedAt }
+            : item,
+        ),
+      )
+      setEditingRenameTimes(undefined)
+    } finally {
+      setSavingRenameTimes(false)
+    }
+  }
 
 
   const toggleSelectAll = () => {
@@ -457,11 +497,16 @@ export function ProcessingContentPage() {
                         {loadingFileContentId === row.id ? '加载中...' : '查看文件'}
                       </Button>
 
-                      {row.renameTimes > 0 && (
-                        <Badge variant="secondary" className="text-xs">
-                          命名: {row.renameTimes}
-                        </Badge>
-                      )}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        className="h-6 gap-1 px-2 text-xs"
+                        onClick={() => openRenameTimesEditor(row)}
+                      >
+                        命名: {row.renameTimes}
+                        <Pencil className="h-3 w-3" />
+                      </Button>
 
                       {/* 错误信息 */}
                       {row.failureReason && (
@@ -550,6 +595,39 @@ export function ProcessingContentPage() {
         <div ref={bottomRef} className="h-4" />
       </div>
 
+
+      <Dialog
+        open={editingRenameTimes != null}
+        onOpenChange={(open) => !open && setEditingRenameTimes(undefined)}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>修改命名次数</DialogTitle>
+          </DialogHeader>
+          <Input
+            type="number"
+            min={0}
+            step={1}
+            value={renameTimesInput}
+            onChange={(event) => setRenameTimesInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                void saveRenameTimes()
+              }
+            }}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingRenameTimes(undefined)}>
+              取消
+            </Button>
+            <Button disabled={savingRenameTimes} onClick={() => void saveRenameTimes()}>
+              {savingRenameTimes ? '保存中...' : '保存'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showFileContentDialog} onOpenChange={setShowFileContentDialog}>
         <DialogContent className="max-w-5xl">

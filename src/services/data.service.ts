@@ -47,6 +47,10 @@ export interface ProcessingContent {
 export interface ProcessingContentSummary extends Omit<ProcessingContent, 'itemContent'> {
   itemContent: ItemContentSummary
 }
+export interface UpdateProcessingContent {
+  renameTimes?: number
+  status?: string
+}
 
 
 export interface SourceItem {
@@ -382,8 +386,10 @@ class ProcessingContentService {
       .then((res: AxiosResponse<ProcessingContent>) => normalizeProcessingContent(res.data))
   }
 
-  async update(id: number, data: ProcessingContent): Promise<ProcessingContent> {
-    return instance.put(`/api/processing-content/${id}`, data).then((res: AxiosResponse<ProcessingContent>) => res.data)
+  async update(id: number, data: UpdateProcessingContent): Promise<ProcessingContent> {
+    return instance
+      .put(`/api/processing-content/${id}`, data, { alertMessage: '修改成功' })
+      .then((res: AxiosResponse<ProcessingContent>) => normalizeProcessingContent(res.data))
   }
 
   async delete(id: number) {
