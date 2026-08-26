@@ -189,7 +189,7 @@ export interface ActiveProcessorItem {
 }
 
 export interface ProcessorRunProgress {
-  totalItems?: number
+  totalItems: number | null
   completedItems: number
   activeItems: Record<string, ActiveProcessorItem>
 }
