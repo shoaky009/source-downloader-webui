@@ -33,10 +33,10 @@ interface Options {
   savePathPattern?: string
   filenamePattern?: string
   processListeners?: string[]
-  renameTaskInterval?: number | string
+  renameTaskInterval?: string
   downloadOptions: DownloadOptions
   variableConflictStrategy?: string
-  renameTimesThreshold?: number | string
+  renameTimesThreshold?: number
   saveProcessingContent?: boolean
   itemExpressionExclusions?: string[]
   itemExpressionInclusions?: string[]
@@ -45,20 +45,17 @@ interface Options {
   fileExpressionExclusions?: string[]
   fileExpressionInclusions?: string[]
   variableErrorStrategy?: string
-  touchItemDirectory?: boolean
-  deleteEmptyDirectory?: boolean
   fileTaggers?: string[]
   variableReplacers?: string[]
-  supportWindowsPlatformPath?: boolean
   fileReplacementDecider?: string
   fileExistsDetector?: string
-  fetchLimit?: number | string
+  fetchLimit?: number
   pointerBatchMode?: boolean
   itemErrorContinue?: boolean
-  parallelism?: number | string
-  retryBackoffMills?: number | string
+  parallelism?: number
+  retryAttempts?: number
+  retryBackoff?: string
   taskGroup?: string
-  expression?: string
 }
 
 interface DownloadOptions {
@@ -80,19 +77,12 @@ const variableConflictStrategyOptions = [
   { label: 'VOTE+SMART', value: 'SMART' },
 ]
 
-const expressionOptions = [
-  { label: 'CEL', value: 'CEL' },
-  { label: 'SPEL', value: 'SPEL' },
-]
 
 const defaultProcessorConfig: ProcessorConfig = {
   enabled: true,
   options: {
-    supportWindowsPlatformPath: true,
     saveProcessingContent: true,
     pointerBatchMode: true,
-    touchItemDirectory: true,
-    deleteEmptyDirectory: true,
     downloadOptions: {},
   },
 }
@@ -112,7 +102,7 @@ function fromApiConfig(config: Record<string, unknown>): ProcessorConfig {
     tags: config.tags as string[] | undefined,
     options: {
       variableProviders: options['variable-providers'] as string[] | undefined,
-      sourceItemFilters: options['source-item-filters'] as string[] | undefined,
+      sourceItemFilters: options['item-filters'] as string[] | undefined,
       fileContentFilters: options['file-content-filters'] as string[] | undefined,
       itemContentFilters: options['item-content-filters'] as string[] | undefined,
       savePathPattern: options['save-path-pattern'] as string | undefined,
@@ -125,25 +115,22 @@ function fromApiConfig(config: Record<string, unknown>): ProcessorConfig {
       saveProcessingContent: options['save-processing-content'] as boolean | undefined,
       itemExpressionExclusions: options['item-expression-exclusions'] as string[] | undefined,
       itemExpressionInclusions: options['item-expression-inclusions'] as string[] | undefined,
-      contentExpressionExclusions: options['content-expression-exclusions'] as string[] | undefined,
-      contentExpressionInclusions: options['content-expression-inclusions'] as string[] | undefined,
+      contentExpressionExclusions: options['item-content-expression-exclusions'] as string[] | undefined,
+      contentExpressionInclusions: options['item-content-expression-inclusions'] as string[] | undefined,
       fileExpressionExclusions: options['file-content-expression-exclusions'] as string[] | undefined,
       fileExpressionInclusions: options['file-content-expression-inclusions'] as string[] | undefined,
       variableErrorStrategy: options['variable-error-strategy'] as string | undefined,
-      touchItemDirectory: options['touch-item-directory'] as boolean | undefined,
-      deleteEmptyDirectory: options['delete-empty-directory'] as boolean | undefined,
       fileTaggers: options['file-taggers'] as string[] | undefined,
-      variableReplacers: options['variable-replacers'] as string[] | undefined,
-      supportWindowsPlatformPath: options['support-windows-platform-path'] as boolean | undefined,
+      variableReplacers: Array.isArray(options['variable-replacers']) && options['variable-replacers'].every((item) => typeof item === 'string') ? options['variable-replacers'] : undefined,
       fileReplacementDecider: options['file-replacement-decider'] as string | undefined,
       fileExistsDetector: options['file-exists-detector'] as string | undefined,
       fetchLimit: options['fetch-limit'] as number | undefined,
       pointerBatchMode: options['pointer-batch-mode'] as boolean | undefined,
       itemErrorContinue: options['item-error-continue'] as boolean | undefined,
       parallelism: options.parallelism as number | undefined,
-      retryBackoffMills: options['retry-backoff-mills'] as number | undefined,
+      retryAttempts: options['retry-attempts'] as number | undefined,
+      retryBackoff: options['retry-backoff'] as string | undefined,
       taskGroup: options['task-group'] as string | undefined,
-      expression: options.expression as string | undefined,
     },
   }
 }
@@ -152,21 +139,21 @@ function toApiConfig(config: ProcessorConfig, original: Record<string, unknown>)
   const originalOptions = (original.options ?? {}) as Record<string, unknown>
   const options: Record<string, unknown> = { ...originalOptions }
   const optionKeys: Array<[keyof Options, string]> = [
-    ['variableProviders', 'variable-providers'], ['sourceItemFilters', 'source-item-filters'],
+    ['variableProviders', 'variable-providers'], ['sourceItemFilters', 'item-filters'],
     ['fileContentFilters', 'file-content-filters'], ['itemContentFilters', 'item-content-filters'],
     ['savePathPattern', 'save-path-pattern'], ['filenamePattern', 'filename-pattern'],
     ['processListeners', 'process-listeners'], ['renameTaskInterval', 'rename-task-interval'],
     ['variableConflictStrategy', 'variable-conflict-strategy'], ['renameTimesThreshold', 'rename-times-threshold'],
     ['saveProcessingContent', 'save-processing-content'], ['itemExpressionExclusions', 'item-expression-exclusions'],
-    ['itemExpressionInclusions', 'item-expression-inclusions'], ['contentExpressionExclusions', 'content-expression-exclusions'],
-    ['contentExpressionInclusions', 'content-expression-inclusions'], ['fileExpressionExclusions', 'file-content-expression-exclusions'],
+    ['itemExpressionInclusions', 'item-expression-inclusions'], ['contentExpressionExclusions', 'item-content-expression-exclusions'],
+    ['contentExpressionInclusions', 'item-content-expression-inclusions'], ['fileExpressionExclusions', 'file-content-expression-exclusions'],
     ['fileExpressionInclusions', 'file-content-expression-inclusions'], ['variableErrorStrategy', 'variable-error-strategy'],
-    ['touchItemDirectory', 'touch-item-directory'], ['deleteEmptyDirectory', 'delete-empty-directory'],
     ['fileTaggers', 'file-taggers'], ['variableReplacers', 'variable-replacers'],
-    ['supportWindowsPlatformPath', 'support-windows-platform-path'], ['fileReplacementDecider', 'file-replacement-decider'],
-    ['fileExistsDetector', 'file-exists-detector'], ['fetchLimit', 'fetch-limit'], ['pointerBatchMode', 'pointer-batch-mode'],
-    ['itemErrorContinue', 'item-error-continue'], ['parallelism', 'parallelism'], ['retryBackoffMills', 'retry-backoff-mills'],
-    ['taskGroup', 'task-group'], ['expression', 'expression'],
+    ['fileReplacementDecider', 'file-replacement-decider'], ['fileExistsDetector', 'file-exists-detector'],
+    ['fetchLimit', 'fetch-limit'], ['pointerBatchMode', 'pointer-batch-mode'],
+    ['itemErrorContinue', 'item-error-continue'], ['parallelism', 'parallelism'],
+    ['retryAttempts', 'retry-attempts'], ['retryBackoff', 'retry-backoff'],
+    ['taskGroup', 'task-group'],
   ]
   for (const [formKey, apiKey] of optionKeys) {
     if (config.options[formKey] !== undefined) options[apiKey] = config.options[formKey]
@@ -179,7 +166,7 @@ function toApiConfig(config: ProcessorConfig, original: Record<string, unknown>)
     enabled: config.enabled,
     'save-path': config.savePath,
     triggers: config.triggers,
-    source: config.source ?? [],
+    source: config.source,
     'item-file-resolver': config.itemFileResolver,
     downloader: config.downloader,
     'file-mover': config.fileMover,
@@ -187,6 +174,11 @@ function toApiConfig(config: ProcessorConfig, original: Record<string, unknown>)
     tags: config.tags,
     options,
   }
+}
+
+function optionalNumber(value: string): number | undefined {
+  if (value === '') return undefined
+  return Number(value)
 }
 
 export function ProcessorForm({ processorName, onSaved }: { processorName?: string; onSaved?: () => void | Promise<void> }) {
@@ -246,13 +238,12 @@ export function ProcessorForm({ processorName, onSaved }: { processorName?: stri
   return (
     <div className="space-y-4">
       <Tabs defaultValue="basic" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 gap-1 md:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-3 gap-1 md:grid-cols-5">
           <TabsTrigger value="basic">基本</TabsTrigger>
           <TabsTrigger value="file">文件</TabsTrigger>
           <TabsTrigger value="filter">过滤</TabsTrigger>
           <TabsTrigger value="process">处理</TabsTrigger>
           <TabsTrigger value="download">下载</TabsTrigger>
-          <TabsTrigger value="other">其他</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic" className="grid gap-4">
@@ -316,9 +307,6 @@ export function ProcessorForm({ processorName, onSaved }: { processorName?: stri
           <FormRow label="文件替换">
             <ComponentSelector type="file-replacement-decider" value={formValue.options.fileReplacementDecider} onChange={(next) => updateOptions('fileReplacementDecider', typeof next === 'string' ? next : undefined)} />
           </FormRow>
-          <FormRow label="Windows路径字符替换">
-            <Switch checked={Boolean(formValue.options.supportWindowsPlatformPath)} onCheckedChange={(checked) => updateOptions('supportWindowsPlatformPath', checked)} />
-          </FormRow>
         </TabsContent>
 
         <TabsContent value="filter" className="grid gap-4">
@@ -347,13 +335,13 @@ export function ProcessorForm({ processorName, onSaved }: { processorName?: stri
             <Input value={String(formValue.options.renameTaskInterval ?? '')} onChange={(event) => updateOptions('renameTaskInterval', event.target.value)} placeholder="PT5M" />
           </FormRow>
           <FormRow label="重命名次数阈值">
-            <Input type="number" value={String(formValue.options.renameTimesThreshold ?? '')} onChange={(event) => updateOptions('renameTimesThreshold', event.target.value)} placeholder="3" />
+            <Input type="number" min={0} step={1} value={formValue.options.renameTimesThreshold ?? ''} onChange={(event) => updateOptions('renameTimesThreshold', optionalNumber(event.target.value))} placeholder="3" />
           </FormRow>
           <FormRow label="保存处理内容">
             <Switch checked={Boolean(formValue.options.saveProcessingContent)} onCheckedChange={(checked) => updateOptions('saveProcessingContent', checked)} />
           </FormRow>
           <FormRow label="条目获取数限制">
-            <Input type="number" value={String(formValue.options.fetchLimit ?? '')} onChange={(event) => updateOptions('fetchLimit', event.target.value)} placeholder="50" />
+            <Input type="number" min={0} step={1} value={formValue.options.fetchLimit ?? ''} onChange={(event) => updateOptions('fetchLimit', optionalNumber(event.target.value))} placeholder="50" />
           </FormRow>
           <FormRow label="指针批量模式">
             <Switch checked={Boolean(formValue.options.pointerBatchMode)} onCheckedChange={(checked) => updateOptions('pointerBatchMode', checked)} />
@@ -361,17 +349,14 @@ export function ProcessorForm({ processorName, onSaved }: { processorName?: stri
           <FormRow label="条目异常继续">
             <Switch checked={Boolean(formValue.options.itemErrorContinue)} onCheckedChange={(checked) => updateOptions('itemErrorContinue', checked)} />
           </FormRow>
-          <FormRow label="更新条目文件夹时间">
-            <Switch checked={Boolean(formValue.options.touchItemDirectory)} onCheckedChange={(checked) => updateOptions('touchItemDirectory', checked)} />
+          <FormRow label="重试次数">
+            <Input type="number" min={0} step={1} value={formValue.options.retryAttempts ?? ''} onChange={(event) => updateOptions('retryAttempts', optionalNumber(event.target.value))} placeholder="3" />
           </FormRow>
-          <FormRow label="清理条目空文件夹">
-            <Switch checked={Boolean(formValue.options.deleteEmptyDirectory)} onCheckedChange={(checked) => updateOptions('deleteEmptyDirectory', checked)} />
-          </FormRow>
-          <FormRow label="条目重试间隔毫秒">
-            <Input type="number" min={1} value={String(formValue.options.retryBackoffMills ?? '')} onChange={(event) => updateOptions('retryBackoffMills', event.target.value)} placeholder="5000" />
+          <FormRow label="重试间隔">
+            <Input value={formValue.options.retryBackoff ?? ''} onChange={(event) => updateOptions('retryBackoff', event.target.value)} placeholder="PT5S" />
           </FormRow>
           <FormRow label="并行数">
-            <Input type="number" min={1} max={10} value={String(formValue.options.parallelism ?? '')} onChange={(event) => updateOptions('parallelism', event.target.value)} placeholder="1" />
+            <Input type="number" min={1} step={1} value={formValue.options.parallelism ?? ''} onChange={(event) => updateOptions('parallelism', optionalNumber(event.target.value))} placeholder="1" />
           </FormRow>
           <FormRow label="任务分组">
             <Input value={String(formValue.options.taskGroup ?? '')} onChange={(event) => updateOptions('taskGroup', event.target.value)} />
@@ -388,11 +373,6 @@ export function ProcessorForm({ processorName, onSaved }: { processorName?: stri
           <FormRow label="请求头" />
         </TabsContent>
 
-        <TabsContent value="other" className="grid gap-4">
-          <FormRow label="表达式类型">
-            <SingleSelect options={expressionOptions} value={formValue.options.expression} onChange={(next) => updateOptions('expression', next)} placeholder="CEL" />
-          </FormRow>
-        </TabsContent>
       </Tabs>
 
       <Button type="button" disabled={submitting} onClick={() => void handleSubmit()}>
