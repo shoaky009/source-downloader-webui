@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { actuatorService } from '@/services/data.service'
+import { applicationService, type ApplicationInfo } from '@/services/data.service'
 
 interface BuildInfo {
   version?: string
@@ -67,19 +67,18 @@ function JsonDisplay({ data }: { data: unknown }) {
 
 export function SettingPage() {
   useDocumentTitle('设置')
-  const [backendAppInfo, setBackendAppInfo] = useState<unknown>()
+  const [backendAppInfo, setBackendAppInfo] = useState<ApplicationInfo>()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setLoading(true)
-    actuatorService
+    applicationService
       .info()
-      .then((response) => setBackendAppInfo(response.data))
+      .then(setBackendAppInfo)
       .finally(() => setLoading(false))
   }, [])
 
   const uiInfo = __APP_INFO__ as BuildInfo | undefined
-  const backendInfo = backendAppInfo as BuildInfo | undefined
 
   return (
     <div className="space-y-6">
@@ -122,8 +121,8 @@ export function SettingPage() {
           <CardContent>
             {loading ? (
               <p className="py-4 text-center text-sm text-muted-foreground">加载中...</p>
-            ) : backendInfo ? (
-              <JsonDisplay data={backendInfo} />
+            ) : backendAppInfo ? (
+              <JsonDisplay data={backendAppInfo} />
             ) : (
               <p className="py-4 text-center text-sm text-muted-foreground">无法获取后端信息</p>
             )}

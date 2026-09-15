@@ -32,6 +32,10 @@ export interface ScrollResponse<T> {
   nextMaxId: number
 }
 
+export interface ApplicationInfo {
+  buildInfo: Record<string, unknown>
+}
+
 export interface ProcessingContent {
   id: number
   processorName: string
@@ -592,11 +596,11 @@ class ApplicationService {
   async reload() {
     return instance.post(`/api/application/reload`, null, { alertMessage: '重载成功' })
   }
-}
 
-class ActuatorService {
-  async info() {
-    return instance.get(`/actuator/info`)
+  async info(): Promise<ApplicationInfo> {
+    return instance
+      .get(`/api/application/info`)
+      .then((response: AxiosResponse<ApplicationInfo>) => response.data)
   }
 }
 
@@ -675,4 +679,3 @@ export const componentService = new ComponentService()
 export const instanceService = new InstanceService()
 export const aiAssistantService = new AiAssistantService()
 export const applicationService = new ApplicationService()
-export const actuatorService = new ActuatorService()
