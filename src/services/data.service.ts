@@ -368,14 +368,15 @@ export interface AiApplyResponse {
 }
 
 class ProcessingContentService {
-  async query(query: Record<string, string>): Promise<ScrollResponse<ProcessingContentSummary>> {
-    const filteredQuery = Object.entries(query).reduce<Record<string, string>>((acc, [key, value]) => {
-      if (value !== null && value !== undefined && value !== '') {
-        acc[key] = value
+  async query(query: Record<string, string | string[]>): Promise<ScrollResponse<ProcessingContentSummary>> {
+    const params = new URLSearchParams()
+    for (const [key, value] of Object.entries(query)) {
+      for (const entry of Array.isArray(value) ? value : [value]) {
+        if (entry !== null && entry !== undefined && entry !== '') {
+          params.append(key, entry)
+        }
       }
-      return acc
-    }, {})
-    const params = new URLSearchParams(filteredQuery)
+    }
     const q = params.size === 0 ? '' : `?${params.toString()}`
     return instance
       .get(`/api/processing-content${q}`)

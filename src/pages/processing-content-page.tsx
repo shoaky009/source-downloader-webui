@@ -147,8 +147,8 @@ export function ProcessingContentPage() {
       try {
         const response = await processingContentService.query({
           maxId: cursor.toString(),
-          processorName: nextFilters.selectedProcessors.join(','),
-          status: nextFilters.status.join(','),
+          processorName: nextFilters.selectedProcessors,
+          status: nextFilters.status,
           itemHash: nextFilters.itemHash,
           'item.title': nextFilters.itemTitle,
           'createTime.begin': nextFilters.createTimeRange?.[0] ?? '',
