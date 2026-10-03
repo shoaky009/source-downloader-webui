@@ -47,6 +47,7 @@ interface Options {
   variableErrorStrategy?: string
   fileTaggers?: string[]
   variableReplacers?: string[]
+  supportWindowsPlatformPath?: boolean
   fileReplacementDecider?: string
   fileExistsDetector?: string
   fetchLimit?: number
@@ -82,6 +83,7 @@ const defaultProcessorConfig: ProcessorConfig = {
   enabled: true,
   options: {
     saveProcessingContent: true,
+    supportWindowsPlatformPath: true,
     pointerBatchMode: true,
     downloadOptions: {},
   },
@@ -107,6 +109,7 @@ function fromApiConfig(config: Record<string, unknown>): ProcessorConfig {
       itemContentFilters: options['item-content-filters'] as string[] | undefined,
       savePathPattern: options['save-path-pattern'] as string | undefined,
       filenamePattern: options['filename-pattern'] as string | undefined,
+      supportWindowsPlatformPath: (options['support-windows-platform-path'] as boolean | undefined) ?? true,
       processListeners: Array.isArray(options['process-listeners']) && options['process-listeners'].every((item) => typeof item === 'string') ? options['process-listeners'] : undefined,
       renameTaskInterval: options['rename-task-interval'] as string | undefined,
       downloadOptions: (options['download-options'] ?? {}) as DownloadOptions,
@@ -149,6 +152,7 @@ function toApiConfig(config: ProcessorConfig, original: Record<string, unknown>)
     ['contentExpressionInclusions', 'item-content-expression-inclusions'], ['fileExpressionExclusions', 'file-content-expression-exclusions'],
     ['fileExpressionInclusions', 'file-content-expression-inclusions'], ['variableErrorStrategy', 'variable-error-strategy'],
     ['fileTaggers', 'file-taggers'], ['variableReplacers', 'variable-replacers'],
+    ['supportWindowsPlatformPath', 'support-windows-platform-path'],
     ['fileReplacementDecider', 'file-replacement-decider'], ['fileExistsDetector', 'file-exists-detector'],
     ['fetchLimit', 'fetch-limit'], ['pointerBatchMode', 'pointer-batch-mode'],
     ['itemErrorContinue', 'item-error-continue'], ['parallelism', 'parallelism'],
@@ -294,6 +298,12 @@ export function ProcessorForm({ processorName, onSaved }: { processorName?: stri
           </FormRow>
           <FormRow label="变量替换">
             <ComponentSelector type="variable-replacer" multiple value={formValue.options.variableReplacers ?? []} onChange={(next) => updateOptions('variableReplacers', Array.isArray(next) ? next : [])} />
+          </FormRow>
+          <FormRow label="兼容 Windows 路径">
+            <div className="space-y-2">
+              <Switch aria-label="兼容 Windows 路径" checked={formValue.options.supportWindowsPlatformPath ?? true} onCheckedChange={(checked) => updateOptions('supportWindowsPlatformPath', checked)} />
+              <p className="text-sm text-muted-foreground">将路径变量中 Windows 不允许的字符替换为对应的全角字符，默认开启。</p>
+            </div>
           </FormRow>
           <FormRow label="变量错误策略">
             <SingleSelect options={variableErrorStrategyOptions} value={formValue.options.variableErrorStrategy} onChange={(next) => updateOptions('variableErrorStrategy', next)} placeholder="Select" />
