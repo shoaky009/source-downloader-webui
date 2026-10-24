@@ -6,6 +6,7 @@ import { ComponentPage } from '@/pages/component-page'
 import { InstancePage } from '@/pages/instance-page'
 import { ProcessingContentPage } from '@/pages/processing-content-page'
 import { ProcessorPage } from '@/pages/processor-page'
+import { AgentPage } from '@/pages/agent-page'
 import { SettingPage } from '@/pages/setting-page'
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/component" element={<ComponentPage />} />
           <Route path="/instance" element={<InstancePage />} />
           <Route path="/processing-content" element={<ProcessingContentPage />} />
+          <Route path="/agent" element={<AgentPage />} />
           <Route path="/setting" element={<SettingPage />} />
         </Routes>
       </AppLayout>

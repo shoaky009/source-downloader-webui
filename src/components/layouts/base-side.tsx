@@ -1,9 +1,10 @@
-import { Blocks, Database, FileText, Settings, Workflow } from 'lucide-react'
+import { Blocks, MessageSquare, Database, FileText, Settings, Workflow } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 import { cn } from '@/lib/utils'
 
 const navItems = [
+  { to: '/agent', label: '配置助手', icon: MessageSquare },
   { to: '/processor', label: '处理器', icon: Workflow },
   { to: '/component', label: '组件', icon: Blocks },
   { to: '/instance', label: '实例', icon: Database },

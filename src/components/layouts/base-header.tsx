@@ -1,5 +1,6 @@
-import { LoaderCircle, Moon, RefreshCw, Sun } from 'lucide-react'
+import { LoaderCircle, MessageSquare, Moon, RefreshCw, Sun } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -24,6 +25,7 @@ export function AppHeader() {
       <div className="text-lg font-semibold">SourceDownloader</div>
       <TooltipProvider>
         <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="icon" className="md:hidden"><Link to="/agent" aria-label="配置助手"><MessageSquare className="h-4 w-4" /></Link></Button>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" onClick={toggleDark}>

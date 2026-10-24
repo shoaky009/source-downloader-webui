@@ -680,3 +680,87 @@ export const componentService = new ComponentService()
 export const instanceService = new InstanceService()
 export const aiAssistantService = new AiAssistantService()
 export const applicationService = new ApplicationService()
+
+export interface AgentQuestion {
+  id: string
+  title: string
+  options: string[]
+  secret: boolean
+}
+
+export interface AgentPlan {
+  summary: string
+  instances: { name: string; factoryType: string; props: Record<string, unknown> }[]
+  components: { rootType: string; typeName: string; name: string; props: Record<string, unknown> }[]
+  processors: Record<string, unknown>[]
+}
+
+export interface AgentSession {
+  id: string
+  messages: { role: 'user' | 'assistant' | 'tool' | 'error'; text: string }[]
+  questions: AgentQuestion[]
+  plan: AgentPlan | null
+  revision: number
+  status: 'idle' | 'thinking' | 'questions' | 'review' | 'executing' | 'failed' | 'complete'
+  steps: { name: string; status: 'pending' | 'running' | 'done' | 'failed'; error: string | null }[]
+}
+
+export interface AgentSettings {
+  protocol: 'responses' | 'chat-completions'
+  baseUrl: string
+  model: string
+  hasApiKey?: boolean
+  apiKey?: string
+}
+
+export type AgentEvent =
+  | { type: 'delta'; text: string }
+  | { type: 'status'; text: string }
+  | { type: 'session'; session: AgentSession }
+  | { type: 'error'; message: string }
+  | { type: 'done' }
+
+async function agentStream(path: string, body: unknown, signal: AbortSignal, onEvent: (event: AgentEvent) => void) {
+  const response = await fetch(`${API_BASE_URL()}/api/agent/${path}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal,
+  })
+  if (!response.ok) {
+    const problem = await response.json().catch(() => ({}))
+    throw new Error(problem.detail || `请求失败 (${response.status})`)
+  }
+  if (!response.body) throw new Error('浏览器不支持流式响应')
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let pending = ''
+  let completed = false
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      pending += done ? decoder.decode() : decoder.decode(value, { stream: true })
+      const lines = pending.split('\n')
+      pending = lines.pop() ?? ''
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue
+        const event = JSON.parse(line.slice(5).trim()) as AgentEvent
+        if (event.type === 'done') completed = true
+        onEvent(event)
+      }
+      if (done) break
+    }
+    if (!completed) throw new Error('连接已中断，请刷新执行状态或继续对话')
+  } finally { reader.releaseLock() }
+}
+
+export const agentService = {
+  async settings(): Promise<AgentSettings> { return (await instance.get('/api/agent/settings')).data },
+  async saveSettings(settings: AgentSettings): Promise<void> { await instance.put('/api/agent/settings', settings) },
+  async createSession(): Promise<AgentSession> { return (await instance.post('/api/agent/sessions')).data },
+  async session(id: string): Promise<AgentSession> { return (await instance.get(`/api/agent/sessions/${id}`)).data },
+  async closeSession(id: string): Promise<void> { await instance.delete(`/api/agent/sessions/${id}`) },
+  chat(id: string, text: string, answers: Record<string, string>, signal: AbortSignal, onEvent: (event: AgentEvent) => void) {
+    return agentStream(`sessions/${id}/messages`, { text, answers }, signal, onEvent)
+  },
+  approve(id: string, revision: number, signal: AbortSignal, onEvent: (event: AgentEvent) => void) {
+    return agentStream(`sessions/${id}/approve`, { revision }, signal, onEvent)
+  },
+}
