@@ -6,6 +6,7 @@ import { ArrowUp, Check, ChevronDown, CircleAlert, LoaderCircle, MessageSquare, 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AgentModelSettings } from '@/components/agent-model-settings'
+import { AgentPlanPreview } from '@/components/agent-plan-preview'
 import { agentService, type AgentEvent, type AgentSession, type AgentSettings } from '@/services/data.service'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { cn } from '@/lib/utils'
@@ -21,25 +22,21 @@ function ConfigDetail({ title, value }: { title: string; value: unknown }) {
   </details>
 }
 
-function Review({ session, busy, onApprove, onRevise }: { session: AgentSession; busy: boolean; onApprove: () => void; onRevise: () => void }) {
+function Review({ session, busy, onApprove, onRevise }: { session: AgentSession; busy: boolean; onApprove: () => void; onRevise: (text: string) => void }) {
   const plan = session.plan
   if (!plan) return null
   const canApprove = session.status === 'review' || session.status === 'failed'
   return <section aria-label="配置方案 Review" className="min-w-0 rounded-xl border bg-background p-4 sm:p-6">
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">{session.status === 'complete' ? '配置已创建' : '检查完整方案'}</h2><span className="text-xs text-muted-foreground">方案 v{session.revision}</span></div>
-    <MarkdownText text={plan.summary} />
-    <div className="my-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground"><span>新增 {plan.instances.length} 个实例</span><span>新增 {plan.components.length} 个组件</span><span>新增 {plan.processors.length} 个处理器</span></div>
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">{session.status === 'complete' ? '配置已创建' : '方案效果预览'}</h2><span className="text-xs text-muted-foreground">方案 v{session.revision}</span></div>
+    <AgentPlanPreview plan={plan} disabled={busy || !canApprove} onRevise={onRevise} />
+    <details className="mt-5 border-t pt-3"><summary className="cursor-pointer text-sm">方案说明</summary><div className="mt-3"><MarkdownText text={plan.summary} /></div></details>
+    <details className="mt-4 border-t pt-3"><summary className="cursor-pointer text-sm">完整配置 · {plan.processors.length} 个处理器 / {plan.components.length} 个新组件 / {plan.instances.length} 个新实例</summary>
     {plan.instances.map(value => <ConfigDetail key={`i-${value.name}`} title={`实例 · ${value.name}`} value={value} />)}
     {plan.components.map(value => <ConfigDetail key={`c-${value.rootType}-${value.name}`} title={`组件 · ${value.rootType} / ${value.typeName}:${value.name}`} value={value} />)}
     {plan.processors.map((value, index) => <div key={`p-${index}`}>
       <ConfigDetail title={`处理器 · ${String(value.name)} · 默认启用`} value={value} />
-      <dl className="mb-3 grid gap-2 text-xs sm:grid-cols-[5rem_1fr]">
-        <dt className="text-muted-foreground">来源</dt><dd className="break-all">{String(value.source)}</dd>
-        <dt className="text-muted-foreground">保存目录</dt><dd className="break-all">{String(value['save-path'])}</dd>
-        <dt className="text-muted-foreground">下载 / 整理</dt><dd className="break-all">{String(value.downloader)} / {String(value['file-mover'])}</dd>
-        <dt className="text-muted-foreground">触发器</dt><dd className="break-all">{Array.isArray(value.triggers) && value.triggers.length ? value.triggers.join('、') : '手动触发'}</dd>
-      </dl>
     </div>)}
+    </details>
     {session.steps.length > 0 && <ol aria-label="创建进度" className="my-4 space-y-3 border-t pt-4">
       {session.steps.map(step => <li key={step.name} className="flex items-start gap-2 text-sm">
         {step.status === 'done' ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" /> : step.status === 'running' ? <LoaderCircle className="mt-0.5 h-4 w-4 shrink-0 animate-spin" /> : step.status === 'failed' ? <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" /> : <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-muted-foreground/40" />}
@@ -47,8 +44,8 @@ function Review({ session, busy, onApprove, onRevise }: { session: AgentSession;
       </li>)}
     </ol>}
     {canApprove && <div className="mt-4 border-t pt-4">
-      <p className="mb-4 text-xs leading-5 text-muted-foreground">确认后依次创建实例、组件和处理器。处理器默认启用，触发器可能开始下载或整理文件。凭据引用由后端填入；远程连接和文件权限将在实际创建或运行时检查。</p>
-      <div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={onApprove}>{session.status === 'failed' ? '重试未完成的创建' : '确认方案并创建'}</Button><Button variant="outline" disabled={busy} onClick={onRevise}>继续修改</Button></div>
+      <p className="mb-4 text-xs leading-5 text-muted-foreground">{plan.processors.some(value => Array.isArray(value.triggers) && value.triggers.length) ? '创建后启用处理器，触发器可能立即运行。' : '创建后启用处理器，等待手动触发。'}当前已通过静态配置校验，未验证连接、文件权限和真实命名结果。</p>
+      <div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={onApprove}>{session.status === 'failed' ? '重试未完成的创建' : '确认方案并创建'}</Button><Button variant="outline" disabled={busy} onClick={() => onRevise('我想调整方案：')}>继续修改</Button></div>
     </div>}
     {session.status === 'complete' && <div className="mt-4 flex flex-wrap gap-4 border-t pt-4 text-sm"><Link className="underline underline-offset-4" to="/processor">查看处理器</Link><Link className="underline underline-offset-4" to="/component">查看组件</Link></div>}
   </section>
@@ -61,6 +58,7 @@ export function AgentPage() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [input, setInput] = useState('')
   const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [questionIndex, setQuestionIndex] = useState(0)
   const [busy, setBusy] = useState(false)
   const [executing, setExecuting] = useState(false)
   const [delta, setDelta] = useState('')
@@ -98,7 +96,7 @@ export function AgentPage() {
     if (!mounted.current) return
     if (event.type === 'delta') setDelta(value => value + event.text)
     if (event.type === 'status') setStatus(event.text)
-    if (event.type === 'session') { setSession(event.session); setDelta(''); setAnswers({}) }
+    if (event.type === 'session') { setSession(event.session); setDelta(''); setAnswers({}); setQuestionIndex(0) }
     if (event.type === 'error') setError(event.message)
   }, [])
 
@@ -130,7 +128,7 @@ export function AgentPage() {
     try {
       const previous = sessionId.current
       const next = await agentService.createSession()
-      sessionId.current = next.id; setSession(next); setInput(''); setAnswers({}); setDelta('')
+      sessionId.current = next.id; setSession(next); setInput(''); setAnswers({}); setQuestionIndex(0); setDelta('')
       if (previous) await agentService.closeSession(previous)
     } catch { setError('无法开始新对话') }
   }
@@ -149,7 +147,7 @@ export function AgentPage() {
         {session?.messages.length === 0 && <div className="py-8 sm:py-16">
           <MessageSquare className="mb-5 h-7 w-7 text-muted-foreground" />
           <h2 className="text-2xl font-medium tracking-tight">你想怎样下载或整理文件？</h2>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">描述目标，补充必要信息。检查完整方案后，再创建组件和处理器。</p>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">描述目标，补充必要信息。预览整理效果后，再创建组件和处理器。</p>
           <div className="mt-8 divide-y border-y">{examples.map(text => <button key={text} disabled={busy} onClick={() => { setInput(text); composer.current?.focus() }} className="flex w-full items-center justify-between gap-3 py-4 text-left text-sm transition-colors hover:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"><span>{text}</span><ArrowUp className="h-4 w-4 shrink-0 rotate-45" /></button>)}</div>
         </div>}
         {!session && !error && <p className="py-12 text-center text-sm text-muted-foreground">正在连接…</p>}
@@ -158,15 +156,15 @@ export function AgentPage() {
         </div>)}
         {delta && <MarkdownText text={delta} />}
         {busy && <div role="status" className="flex items-center gap-2 text-xs text-muted-foreground"><LoaderCircle className="h-3.5 w-3.5 animate-spin" />{status || '正在处理…'}</div>}
-        {session && session.questions.length > 0 && !busy && <form className="space-y-5 rounded-xl border p-4 sm:p-6" onSubmit={event => { event.preventDefault(); void run(false, '', answers) }}>
-          <h2 className="font-medium">补充这些信息后继续</h2>
-          {session.questions.map(question => <fieldset key={question.id} className="min-w-0 space-y-3"><legend className="mb-2 text-sm leading-6">{question.title}</legend>
+        {session && session.questions.length > 0 && !busy && <form className="space-y-5 rounded-xl border p-4 sm:p-6" onSubmit={event => { event.preventDefault(); if (questionIndex < session.questions.length - 1) setQuestionIndex(value => value + 1); else void run(false, '', answers) }}>
+          <div className="flex items-center justify-between gap-2"><h2 className="font-medium">确认一个细节</h2><span className="text-xs text-muted-foreground">{questionIndex + 1} / {session.questions.length}</span></div>
+          {session.questions.slice(questionIndex, questionIndex + 1).map(question => <fieldset key={question.id} className="min-w-0 space-y-3"><legend className="mb-2 text-sm leading-6">{question.title}</legend>
             {question.options.length > 0 && <div className="flex flex-wrap gap-2">{question.options.map(option => <button key={option} type="button" aria-pressed={answers[question.id] === option} onClick={() => setAnswers(value => ({ ...value, [question.id]: option }))} className={cn('max-w-full whitespace-normal rounded-md border px-3 py-2 text-left text-sm hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring', answers[question.id] === option && 'border-primary bg-accent')}>{option}</button>)}</div>}
             <Input aria-label={question.title} required type={question.secret ? 'password' : 'text'} autoComplete={question.secret ? 'new-password' : 'off'} value={answers[question.id] ?? ''} onChange={event => setAnswers(value => ({ ...value, [question.id]: event.target.value }))} placeholder={question.secret ? '凭据只交给后端，模型使用引用' : question.options.length ? '也可以填写其他选择或说明' : '输入你的说明'} />
           </fieldset>)}
-          <Button type="submit">提交并继续</Button>
+          <div className="flex flex-wrap gap-2">{questionIndex > 0 && <Button type="button" variant="outline" onClick={() => setQuestionIndex(value => value - 1)}>上一个</Button>}<Button type="submit" disabled={!answers[session.questions[questionIndex]?.id]?.trim()}>{questionIndex < session.questions.length - 1 ? '下一个' : '提交并继续'}</Button></div>
         </form>}
-        {session?.plan && <Review session={session} busy={busy} onApprove={() => void run(true)} onRevise={() => { setInput('我想调整方案：'); composer.current?.focus() }} />}
+        {session?.plan && <Review session={session} busy={busy} onApprove={() => void run(true)} onRevise={text => { setInput(text); composer.current?.focus() }} />}
         {error && <div role="alert" className="rounded-md border border-destructive/30 p-3 text-sm"><p className="break-words text-destructive">{error}</p>{session && <Button variant="link" className="mt-1 h-auto px-0 py-1" disabled={busy} onClick={async () => { try { setSession(await agentService.session(session.id)); setError('') } catch { /* API interceptor shows the current error. */ } }}>刷新当前状态</Button>}</div>}
         <div ref={bottom} />
       </div>
