@@ -74,7 +74,7 @@ describe('source pointer editing', () => {
     expect(html).toContain('作品订阅')
     expect(html).toContain('最近处理的作品')
     expect(html).toContain('增量边界')
-    expect(html).toContain('名称 / ID')
+    expect(html).not.toContain('名称 / ID')
     expect(html).toContain('circle:test')
   })
 

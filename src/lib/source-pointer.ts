@@ -42,8 +42,16 @@ export function pointerUiSchema(schema: RJSFSchema): UiSchema {
   for (const [key, child] of Object.entries(schema.properties ?? {})) {
     if (typeof child === 'object') ui[key] = pointerUiSchema(child)
   }
-  if (typeof schema.additionalProperties === 'object') {
-    ui.additionalProperties = pointerUiSchema(schema.additionalProperties)
+  if (schema.additionalProperties) {
+    const valueUi = typeof schema.additionalProperties === 'object' ? pointerUiSchema(schema.additionalProperties) : {}
+    ui.additionalProperties = {
+      ...valueUi,
+      'ui:label': false,
+      'ui:options': {
+        ...valueUi['ui:options'],
+        keyTitle: typeof schema.propertyNames === 'object' ? schema.propertyNames.title : undefined,
+      },
+    }
   }
   if (Array.isArray(schema.items)) {
     const items = schema.items

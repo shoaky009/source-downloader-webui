@@ -1,6 +1,6 @@
 import Form from '@rjsf/shadcn'
 import validator from '@rjsf/validator-ajv8'
-import { ADDITIONAL_PROPERTY_FLAG, replaceStringParameters, type RJSFSchema, type WrapIfAdditionalTemplateProps } from '@rjsf/utils'
+import { ADDITIONAL_PROPERTY_FLAG, getUiOptions, replaceStringParameters, type RJSFSchema, type WrapIfAdditionalTemplateProps } from '@rjsf/utils'
 import { lazy, Suspense, useId, useMemo, useState } from 'react'
 
 import { Button } from '~/components/ui/button'
@@ -19,20 +19,34 @@ const translations: Record<string, string> = {
   'No data for optional field': '未设置', '%1 Key': '%1 标识',
 }
 
-function PointerMapEntry({ schema, children, classNames, style, id, label, disabled, readonly, onKeyRenameBlur, onRemoveProperty }: WrapIfAdditionalTemplateProps) {
+function PointerMapEntry({ schema, uiSchema, children, classNames, style, id, label, rawDescription, disabled, readonly, onKeyRenameBlur, onRemoveProperty }: WrapIfAdditionalTemplateProps) {
   if (!(ADDITIONAL_PROPERTY_FLAG in schema)) {
     return <div className={classNames} style={style}>{children}</div>
   }
-  return (
-    <div className="min-w-0 space-y-3 border-l-2 pl-3">
-      <div className="flex items-end gap-2">
-        <div className="min-w-0 flex-1 space-y-1">
-          <label htmlFor={`${id}-key`} className="text-xs text-muted-foreground">名称 / ID</label>
-          <Input key={label} id={`${id}-key`} defaultValue={label} disabled={disabled || readonly} onBlur={onKeyRenameBlur} />
-        </div>
-        <Button type="button" variant="outline" size="sm" disabled={disabled || readonly} onClick={onRemoveProperty} aria-label={`删除 ${label}`}>删除</Button>
-      </div>
+  const { keyTitle } = getUiOptions(uiSchema)
+  const types = Array.isArray(schema.type) ? schema.type : [schema.type]
+  const isContainer = types.includes('object') || types.includes('array')
+  const valueTitle = schema.title || '值'
+  const valueField = (
+    <div className="min-w-0 space-y-1">
+      {isContainer ? <div className="text-sm font-medium">{valueTitle}</div> : <label htmlFor={id} className="block text-sm font-medium">{valueTitle}</label>}
       {children}
+      {rawDescription && <p className="text-xs text-muted-foreground">{rawDescription}</p>}
+    </div>
+  )
+  return (
+    <div className="min-w-0 space-y-3 rounded-md border p-3">
+      <div className={`grid items-start gap-3 ${isContainer ? 'grid-cols-[minmax(0,1fr)_auto]' : 'sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]'}`}>
+        <div className="min-w-0 space-y-1">
+          <label htmlFor={`${id}-key`} className="block text-sm font-medium">{typeof keyTitle === 'string' && keyTitle ? keyTitle : '键'}</label>
+          <div className="p-0.5">
+            <Input key={label} id={`${id}-key`} className="h-9" defaultValue={label} disabled={disabled || readonly} onBlur={onKeyRenameBlur} />
+          </div>
+        </div>
+        {!isContainer && valueField}
+        <Button type="button" variant="outline" className={`h-9 justify-self-end ${isContainer ? 'mt-[26px]' : 'sm:mt-[26px]'}`} disabled={disabled || readonly} onClick={onRemoveProperty} aria-label={`删除 ${label}`}>删除</Button>
+      </div>
+      {isContainer && valueField}
     </div>
   )
 }
