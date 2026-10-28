@@ -1,12 +1,16 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 import { FileContentDetail } from '@/components/file-content-detail'
 import { ItemContentDetail } from '@/components/item-content-detail'
-import { JsonEditor } from '@/components/shared/json-editor'
+import { SourcePointerEditor } from '~/components/source-pointer-editor'
+import { useSourcePointer } from '~/hooks/use-source-pointer'
+import { parseSourcePointer } from '~/lib/source-pointer'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
   type DryRunError,
@@ -63,6 +67,8 @@ type DryRunRow = Extract<DryRunEvent, { type: 'item' | 'itemError' }>
 
 export function ProcessorDryRun({ processorName }: { processorName?: string }) {
   const [dryRunFormData, setDryRunFormData] = useState({ filterProcessed: true, pointer: '{}' })
+  const [pointerMode, setPointerMode] = useState('initial')
+  const { source, schema, loading: pointerLoading, error: pointerError, metadataError, reload } = useSourcePointer(processorName)
   const [streamable, setStreamable] = useState(true)
   const [loading, setLoading] = useState(false)
   const [dryRunOpened, setDryRunOpened] = useState(false)
@@ -73,6 +79,14 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
   const [summary, setSummary] = useState<DryRunSummary>()
   const [fileContents, setFileContents] = useState<FileContent[]>([])
   const [showFileContentDialog, setShowFileContentDialog] = useState(false)
+  useEffect(() => {
+    setPointerMode('initial')
+    setDryRunFormData({ filterProcessed: true, pointer: '{}' })
+  }, [processorName])
+
+  useEffect(() => {
+    if (source) setDryRunFormData((current) => ({ ...current, pointer: JSON.stringify(source.pointer ?? {}, null, 2) }))
+  }, [source])
   const applyDryRunEvent = (event: DryRunEvent) => {
     switch (event.type) {
       case 'item':
@@ -93,6 +107,13 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
     if (!processorName) {
       return
     }
+    let pointer: Record<string, unknown> | null
+    try {
+      pointer = pointerMode === 'current' ? null : pointerMode === 'initial' ? {} : parseSourcePointer(dryRunFormData.pointer, schema)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '请检查抓取进度')
+      return
+    }
     dryRunOpenedRef.current = true
     setDryRunOpened(true)
     setDryRunRows([])
@@ -104,7 +125,7 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
     try {
       const payload = {
         filterProcessed: dryRunFormData.filterProcessed,
-        pointer: dryRunFormData.pointer.trim() ? JSON.parse(dryRunFormData.pointer) : null,
+        pointer,
       }
 
       if (!streamable) {
@@ -153,14 +174,33 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
           <Switch checked={dryRunFormData.filterProcessed} onCheckedChange={(checked) => setDryRunFormData((current) => ({ ...current, filterProcessed: checked }))} />
         </div>
         <div className="grid gap-2">
-          <div className="text-sm font-medium">Pointer</div>
-          <JsonEditor value={dryRunFormData.pointer} onChange={(value) => setDryRunFormData((current) => ({ ...current, pointer: value }))} />
+          <label className="text-sm font-medium" htmlFor="dry-run-pointer-mode">抓取起点</label>
+          <Select value={pointerMode} onValueChange={setPointerMode}>
+            <SelectTrigger id="dry-run-pointer-mode"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="initial">数据源初始进度</SelectItem>
+              <SelectItem value="current">当前保存的进度</SelectItem>
+              <SelectItem value="custom">自定义进度</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">{pointerMode === 'initial' ? '使用数据源定义的初始位置；不一定从最早内容开始。' : '仅用于本次演练，不修改正式抓取进度。'}</p>
+          {pointerMode === 'custom' && (
+            pointerLoading ? <p className="text-sm text-muted-foreground">加载进度描述…</p> : (
+              <div className="max-h-[50dvh] overflow-y-auto space-y-3 pr-1">
+                {(pointerError || metadataError) && <div className="space-y-2">
+                  <p role="status" className="text-sm text-muted-foreground">{pointerError || metadataError}</p>
+                  {pointerError && <Button variant="outline" size="sm" onClick={reload}>重新加载</Button>}
+                </div>}
+                <SourcePointerEditor value={dryRunFormData.pointer} onChange={(pointer) => setDryRunFormData((current) => ({ ...current, pointer }))} schema={schema} />
+              </div>
+            )
+          )}
         </div>
         <div className="flex items-center justify-between rounded-md border p-3">
           <span className="text-sm">流式响应</span>
           <Switch checked={streamable} onCheckedChange={setStreamable} />
         </div>
-        <Button onClick={handleDryRunFormSubmit}>确认</Button>
+        <Button disabled={loading || (pointerMode === 'custom' && pointerLoading)} onClick={handleDryRunFormSubmit}>开始演练</Button>
       </div>
 
       <Dialog open={dryRunOpened} onOpenChange={(open) => {

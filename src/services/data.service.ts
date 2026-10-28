@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosResponse } from 'axios'
+import type { RJSFSchema } from '@rjsf/utils'
 import { toast } from 'sonner'
 
 const isDev = () => import.meta.env.MODE === 'development'
@@ -252,8 +253,15 @@ export interface ComponentTypeDescriptor {
 export interface ComponentMetadata {
   propsJsonSchema: Record<string, any> | null
   propsUiSchema: Record<string, any> | null
+  sourcePointerJsonSchema?: RJSFSchema | null
 }
 
+export interface ProcessorSourceState {
+  sourceId: string
+  pointer: Record<string, unknown>
+  lastActiveTime: string | null
+  retryTimes: number
+}
 
 export interface ComponentQuery {
   type?: ComponentRootType
@@ -463,7 +471,7 @@ class ProcessorService {
   }
 
   async sourceState(name: string) {
-    return instance.get(`/api/processor/${name}/state`)
+    return instance.get<ProcessorSourceState>(`/api/processor/${encodeURIComponent(name)}/state`)
   }
 
   async updateSourcePointer(name: string, state: object) {
