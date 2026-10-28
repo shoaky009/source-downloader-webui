@@ -347,7 +347,7 @@ export function ProcessorPage() {
                                   setStateJsonViewer(true)
                                 }}
                               >
-                                查看 Pointer
+                                数据源游标
                               </Button>
                               <Button
                                 variant="ghost"

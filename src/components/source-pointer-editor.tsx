@@ -49,17 +49,17 @@ export function SourcePointerEditor({ value, onChange, schema, disabled = false 
     try { return { pointer: parseSourcePointer(value), error: undefined } }
     catch (error) { return { pointer: undefined, error: (error as Error).message } }
   }, [value])
-  const uiSchema = useMemo(() => schema ? pointerUiSchema(schema) : {}, [schema])
+  const uiSchema = useMemo(() => schema ? { ...pointerUiSchema(schema), 'ui:title': '' } : {}, [schema])
   const hasSchema = Boolean(schema && Object.keys(schema).length)
   const activeMode = hasSchema && parsed.pointer ? mode : 'json'
 
   return (
     <Tabs value={activeMode} onValueChange={setMode} className="min-w-0 space-y-3">
-      <TabsList aria-label="抓取进度编辑方式">
+      <TabsList aria-label="数据源游标编辑方式">
         <TabsTrigger value="form" disabled={!hasSchema || !parsed.pointer}>字段</TabsTrigger>
         <TabsTrigger value="json">JSON</TabsTrigger>
       </TabsList>
-      {!hasSchema && <p className="text-sm text-muted-foreground">暂无可用的进度描述，使用 JSON 编辑。</p>}
+      {!hasSchema && <p className="text-sm text-muted-foreground">暂无游标字段描述，使用 JSON 编辑。</p>}
       <TabsContent value="form" className="mt-0">
         {schema && parsed.pointer && (
           <Form

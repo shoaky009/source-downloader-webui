@@ -17,15 +17,15 @@ export function parseSourcePointer(text: string, schema?: RJSFSchema | null): Re
   try {
     pointer = JSON.parse(text)
   } catch {
-    throw new Error('抓取进度不是有效的 JSON')
+    throw new Error('数据源游标不是有效的 JSON')
   }
   if (pointer === null || typeof pointer !== 'object' || Array.isArray(pointer)) {
-    throw new Error('抓取进度必须是 JSON 对象')
+    throw new Error('数据源游标必须是 JSON 对象')
   }
   if (schema) {
     const { errors } = validator.validateFormData(pointer, schema)
     if (errors.length) {
-      throw new Error(`请检查抓取进度：${errors[0].stack}`)
+      throw new Error(`请检查数据源游标：${errors[0].stack}`)
     }
   }
   return pointer as Record<string, unknown>

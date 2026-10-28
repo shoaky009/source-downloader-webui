@@ -33,11 +33,11 @@ export function useSourcePointer(processorName?: string, enabled = true) {
           const metadata = await componentService.getComponentPropSchema('source', sourceTypeFromId(source.sourceId))
           schema = metadata?.sourcePointerJsonSchema ?? null
         } catch {
-          metadataError = '进度描述加载失败，可以继续使用 JSON 编辑。'
+          metadataError = '游标字段描述加载失败，使用 JSON 编辑。'
         }
         if (!disposed) setState({ processorName, source, schema, metadataError, loading: false })
       } catch (error) {
-        if (!disposed) setState({ processorName, loading: false, error: error instanceof Error ? error.message : '抓取进度加载失败' })
+        if (!disposed) setState({ processorName, loading: false, error: error instanceof Error ? error.message : '数据源游标加载失败' })
       }
     })()
     return () => { disposed = true }

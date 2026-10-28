@@ -111,7 +111,7 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
     try {
       pointer = pointerMode === 'current' ? null : pointerMode === 'initial' ? {} : parseSourcePointer(dryRunFormData.pointer, schema)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '请检查抓取进度')
+      toast.error(error instanceof Error ? error.message : '请检查数据源游标')
       return
     }
     dryRunOpenedRef.current = true
@@ -174,18 +174,18 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
           <Switch checked={dryRunFormData.filterProcessed} onCheckedChange={(checked) => setDryRunFormData((current) => ({ ...current, filterProcessed: checked }))} />
         </div>
         <div className="grid gap-2">
-          <label className="text-sm font-medium" htmlFor="dry-run-pointer-mode">抓取起点</label>
+          <label className="text-sm font-medium" htmlFor="dry-run-pointer-mode">数据源游标</label>
           <Select value={pointerMode} onValueChange={setPointerMode}>
             <SelectTrigger id="dry-run-pointer-mode"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="initial">数据源初始进度</SelectItem>
-              <SelectItem value="current">当前保存的进度</SelectItem>
-              <SelectItem value="custom">自定义进度</SelectItem>
+              <SelectItem value="initial">初始游标</SelectItem>
+              <SelectItem value="current">当前游标</SelectItem>
+              <SelectItem value="custom">自定义游标</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">{pointerMode === 'initial' ? '使用数据源定义的初始位置；不一定从最早内容开始。' : '仅用于本次演练，不修改正式抓取进度。'}</p>
+          <p className="text-xs text-muted-foreground">{pointerMode === 'initial' ? '初始位置由数据源决定。' : '仅用于本次演练，不保存游标。'}</p>
           {pointerMode === 'custom' && (
-            pointerLoading ? <p className="text-sm text-muted-foreground">加载进度描述…</p> : (
+            pointerLoading ? <p className="text-sm text-muted-foreground">加载数据源游标…</p> : (
               <div className="max-h-[50dvh] overflow-y-auto space-y-3 pr-1">
                 {(pointerError || metadataError) && <div className="space-y-2">
                   <p role="status" className="text-sm text-muted-foreground">{pointerError || metadataError}</p>

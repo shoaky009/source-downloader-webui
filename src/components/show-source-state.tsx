@@ -36,11 +36,11 @@ export function ShowSourceState({ processorName, open, onOpenChange }: { process
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[85dvh] w-[calc(100%-2rem)] max-w-3xl flex-col">
         <DialogHeader>
-          <DialogTitle>抓取进度</DialogTitle>
-          <DialogDescription>{processorName} · 保存后，下次运行使用调整后的进度。</DialogDescription>
+          <DialogTitle>数据源游标</DialogTitle>
+          <DialogDescription>{processorName} · 保存后下次运行生效。</DialogDescription>
         </DialogHeader>
         <div className="min-h-0 min-w-0 flex-1 overflow-y-auto space-y-3 pr-1">
-          {loading ? <p className="text-sm text-muted-foreground">加载抓取进度…</p> : error ? (
+          {loading ? <p className="text-sm text-muted-foreground">加载数据源游标…</p> : error ? (
             <div className="space-y-2">
               <p role="alert" className="text-sm text-destructive">{error}</p>
               <Button variant="outline" size="sm" onClick={reload}>重新加载</Button>
@@ -56,7 +56,7 @@ export function ShowSourceState({ processorName, open, onOpenChange }: { process
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button disabled={loading || !source || submitting} onClick={submitPointerData}>{submitting ? '保存中…' : '保存进度'}</Button>
+          <Button disabled={loading || !source || submitting} onClick={submitPointerData}>{submitting ? '保存中…' : '保存游标'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

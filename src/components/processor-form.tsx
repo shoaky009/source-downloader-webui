@@ -353,7 +353,7 @@ export function ProcessorForm({ processorName, onSaved }: { processorName?: stri
           <FormRow label="条目获取数限制">
             <Input type="number" min={0} step={1} value={formValue.options.fetchLimit ?? ''} onChange={(event) => updateOptions('fetchLimit', optionalNumber(event.target.value))} placeholder="50" />
           </FormRow>
-          <FormRow label="指针批量模式">
+          <FormRow label="批量保存数据源游标">
             <Switch checked={Boolean(formValue.options.pointerBatchMode)} onCheckedChange={(checked) => updateOptions('pointerBatchMode', checked)} />
           </FormRow>
           <FormRow label="条目异常继续">
