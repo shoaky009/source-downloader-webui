@@ -67,7 +67,7 @@ type DryRunRow = Extract<DryRunEvent, { type: 'item' | 'itemError' }>
 
 export function ProcessorDryRun({ processorName }: { processorName?: string }) {
   const [dryRunFormData, setDryRunFormData] = useState({ filterProcessed: true, pointer: '{}' })
-  const [pointerMode, setPointerMode] = useState('initial')
+  const [pointerMode, setPointerMode] = useState('current')
   const { source, schema, loading: pointerLoading, error: pointerError, metadataError, reload } = useSourcePointer(processorName)
   const [streamable, setStreamable] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -80,7 +80,7 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
   const [fileContents, setFileContents] = useState<FileContent[]>([])
   const [showFileContentDialog, setShowFileContentDialog] = useState(false)
   useEffect(() => {
-    setPointerMode('initial')
+    setPointerMode('current')
     setDryRunFormData({ filterProcessed: true, pointer: '{}' })
   }, [processorName])
 
@@ -178,8 +178,8 @@ export function ProcessorDryRun({ processorName }: { processorName?: string }) {
           <Select value={pointerMode} onValueChange={setPointerMode}>
             <SelectTrigger id="dry-run-pointer-mode"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="initial">初始游标</SelectItem>
               <SelectItem value="current">当前游标</SelectItem>
+              <SelectItem value="initial">初始游标</SelectItem>
               <SelectItem value="custom">自定义游标</SelectItem>
             </SelectContent>
           </Select>
